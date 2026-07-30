@@ -1,0 +1,2352 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<meta name="theme-color" content="#131b2e"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="TaxPrecision"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="apple-touch-icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="%23131b2e"/><text x="256" y="340" font-size="240" text-anchor="middle" fill="white" font-family="Inter,sans-serif" font-weight="900">TP</text></svg>'/>
+<title>TaxPrecision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary-fixed": "#dae2fd", "on-tertiary": "#ffffff", "on-secondary-fixed-variant": "#38485d",
+          "surface-bright": "#f7f9fb", "surface-variant": "#e0e3e5", "surface-container": "#eceef0",
+          "on-primary": "#ffffff", "outline-variant": "#c6c6cd", "inverse-primary": "#bec6e0",
+          "surface": "#f7f9fb", "error": "#ba1a1a", "on-error": "#ffffff", "inverse-surface": "#2d3133",
+          "on-tertiary-fixed": "#002113", "surface-dim": "#d8dadc", "surface-container-highest": "#e0e3e5",
+          "surface-container-lowest": "#ffffff", "on-error-container": "#93000a", "error-container": "#ffdad6",
+          "secondary-fixed": "#d3e4fe", "on-background": "#191c1e", "tertiary": "#000000",
+          "inverse-on-surface": "#eff1f3", "primary-container": "#131b2e", "on-primary-fixed-variant": "#3f465c",
+          "surface-container-high": "#e6e8ea", "on-surface-variant": "#45464d", "on-primary-fixed": "#131b2e",
+          "tertiary-container": "#002113", "background": "#f7f9fb", "on-tertiary-fixed-variant": "#005236",
+          "on-secondary-container": "#54647a", "surface-container-low": "#f2f4f6", "on-tertiary-container": "#009668",
+          "secondary-fixed-dim": "#b7c8e1", "on-secondary": "#ffffff", "on-primary-container": "#7c839b",
+          "primary": "#000000", "on-surface": "#191c1e", "tertiary-fixed-dim": "#4edea3",
+          "outline": "#76777d", "secondary-container": "#d0e1fb", "secondary": "#505f76",
+          "primary-fixed-dim": "#bec6e0", "on-secondary-fixed": "#0b1c30", "tertiary-fixed": "#6ffbbe",
+          "surface-tint": "#565e74"
+        },
+        borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+        spacing: { "margin-page": "32px", "stack-md": "16px", "stack-sm": "8px", "container-max": "1280px", "gutter": "24px", "unit": "4px", "stack-lg": "24px" },
+        fontFamily: { "h2": ["Inter"], "body-lg": ["Inter"], "display": ["Inter"], "data-mono": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "body-md": ["Inter"], "h3": ["Inter"], "h1": ["Inter"] },
+        fontSize: {
+          "h2": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+          "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+          "display": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "600" }],
+          "data-mono": ["14px", { lineHeight: "20px", fontWeight: "500" }],
+          "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+          "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+          "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+          "h3": ["20px", { lineHeight: "28px", fontWeight: "500" }],
+          "h1": ["30px", { lineHeight: "38px", letterSpacing: "-0.01em", fontWeight: "600" }]
+        }
+      }
+    }
+  };
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #e0e3e5; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #c6c6cd; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .view.active.flex-view { display: flex; }
+  .nav-item.active { background-color: #d0e1fb; color: #000; font-weight: 600; }
+  .modal-backdrop { display: none; }
+  .modal-backdrop.open { display: flex; }
+  #expensePanel { transform: translateX(100%); transition: transform 0.3s ease; }
+  #expensePanel.open { transform: translateX(0); }
+  #expenseBackdrop { display: none; }
+  #expenseBackdrop.open { display: block; }
+  .typing-dot { animation: typing 1.4s infinite; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+
+  /* Auth gate */
+  body:not(.signed-in) > *:not(#authOverlay):not(script):not(style):not(noscript) { display: none !important; }
+  body.signed-in #authOverlay { display: none !important; }
+
+  /* Mobile drawer */
+  @media (max-width: 767px) {
+    #sideNav { transform: translateX(-100%); transition: transform 0.25s ease; }
+    #sideNav.open { transform: translateX(0); }
+    #navBackdrop { display: none; }
+    #navBackdrop.open { display: block; }
+    #mainContent { margin-left: 0 !important; }
+    body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+    .page-margin { padding: 16px !important; }
+    /* Chat bubbles wider on mobile */
+    #view-assistant .max-w-\[60\%\],
+    #view-assistant .max-w-\[70\%\],
+    #view-assistant .max-w-\[80\%\] { max-width: 90% !important; }
+    /* Modal margins on small screens */
+    .modal-backdrop > div { margin: 12px; max-height: calc(100vh - 24px); }
+  }
+</style>
+</head>
+<body class="bg-background text-on-surface">
+
+<!-- ============ AUTH OVERLAY ============ -->
+<div id="authOverlay" class="fixed inset-0 bg-background flex items-center justify-center p-4 z-[200]">
+  <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-2xl w-full max-w-md p-stack-lg">
+    <div class="flex items-center gap-stack-md mb-stack-lg">
+      <div class="h-12 w-12 bg-primary rounded flex items-center justify-center text-white">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+      </div>
+      <div>
+        <h1 class="font-h2 text-h2 font-black text-primary">TaxPrecision</h1>
+        <p class="font-label-md text-label-md text-on-surface-variant">FY 2026-27</p>
+      </div>
+    </div>
+    <div id="authStep1">
+      <h2 class="font-h3 text-h3 text-primary mb-1">Sign in</h2>
+      <p class="font-body-sm text-on-surface-variant mb-stack-lg">We'll email you a magic link — no password needed.</p>
+      <div class="space-y-stack-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Email</label>
+          <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-md"/>
+        </div>
+        <button id="authSendBtn" class="w-full py-3 bg-primary text-on-primary rounded-lg font-body-md font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-base">mail</span> Send Magic Link
+        </button>
+        <p id="authError" class="hidden text-error font-body-sm"></p>
+      </div>
+    </div>
+    <div id="authStep2" class="hidden text-center">
+      <div class="w-16 h-16 mx-auto bg-on-tertiary-container/10 rounded-full flex items-center justify-center mb-stack-md">
+        <span class="material-symbols-outlined text-on-tertiary-container" style="font-size:32px;">mark_email_read</span>
+      </div>
+      <h2 class="font-h3 text-h3 text-primary mb-1">Check your email</h2>
+      <p class="font-body-sm text-on-surface-variant">We sent a link to <span id="authEmailEcho" class="font-semibold"></span>. Click it on this device to sign in.</p>
+      <button id="authBackBtn" class="mt-stack-lg text-primary font-body-sm font-semibold hover:underline">Use a different email</button>
+    </div>
+    <div id="authLoading" class="hidden text-center py-stack-lg">
+      <div class="flex justify-center gap-1 mb-stack-md">
+        <span class="typing-dot w-2 h-2 bg-on-surface-variant rounded-full"></span>
+        <span class="typing-dot w-2 h-2 bg-on-surface-variant rounded-full"></span>
+        <span class="typing-dot w-2 h-2 bg-on-surface-variant rounded-full"></span>
+      </div>
+      <p class="font-body-sm text-on-surface-variant">Signing you in...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Top App Bar -->
+<header class="bg-surface-bright border-b border-outline-variant sticky top-0 z-50 flex justify-between items-center w-full px-4 md:px-margin-page h-16">
+  <div class="flex items-center gap-stack-sm md:gap-stack-md">
+    <button id="hamburgerBtn" class="md:hidden p-2 -ml-2 rounded-full hover:bg-surface-container-high text-on-surface-variant" aria-label="Open menu">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <span class="font-h2 text-h2 font-black text-primary">TaxPrecision</span>
+  </div>
+  <div class="flex items-center gap-stack-sm md:gap-stack-md">
+    <button id="apiStatus" class="flex items-center gap-1 px-2 md:px-3 py-1 rounded-full text-label-md font-label-md cursor-pointer transition-colors" title="Click to configure">
+      <span class="material-symbols-outlined text-[14px]">key</span>
+      <span id="apiStatusText" class="hidden sm:inline">API Key needed</span>
+    </button>
+    <button id="settingsBtn" class="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant" title="Settings">
+      <span class="material-symbols-outlined">settings</span>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile nav backdrop -->
+<div id="navBackdrop" class="fixed inset-0 bg-inverse-surface/40 z-[39] md:hidden"></div>
+
+<div class="flex min-h-screen">
+  <!-- Side Nav -->
+  <nav id="sideNav" class="fixed left-0 top-16 h-[calc(100vh-64px)] w-[280px] bg-surface-container-low border-r border-outline-variant flex flex-col p-stack-lg gap-stack-md z-40">
+    <div class="mb-stack-lg">
+      <div class="flex items-center gap-stack-md mb-2">
+        <div class="h-10 w-10 bg-primary rounded flex items-center justify-center text-white">
+          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+        </div>
+        <div>
+          <h3 class="font-h3 text-h3 font-bold text-primary">TaxPrecision</h3>
+          <p class="font-label-md text-label-md text-on-surface-variant">FY 2026-27</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col gap-unit">
+      <a class="nav-item active flex items-center gap-stack-md px-stack-md py-stack-sm text-on-secondary-fixed-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg cursor-pointer" data-view="dashboard">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-body-md text-body-md">Dashboard</span>
+      </a>
+      <a class="nav-item flex items-center gap-stack-md px-stack-md py-stack-sm text-on-secondary-fixed-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg cursor-pointer" data-view="ledger">
+        <span class="material-symbols-outlined">table_chart</span>
+        <span class="font-body-md text-body-md">Tax Ledger</span>
+      </a>
+      <a class="nav-item flex items-center gap-stack-md px-stack-md py-stack-sm text-on-secondary-fixed-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg cursor-pointer" data-view="assistant">
+        <span class="material-symbols-outlined">chat_bubble</span>
+        <span class="font-body-md text-body-md">AI Assistant</span>
+      </a>
+    </div>
+    <div class="mt-auto border-t border-outline-variant pt-stack-lg">
+      <a class="nav-item flex items-center gap-stack-md px-stack-md py-stack-sm text-on-secondary-fixed-variant hover:text-primary hover:bg-surface-container-high transition-all rounded-lg cursor-pointer" data-view="settings">
+        <span class="material-symbols-outlined">settings</span>
+        <span class="font-body-md text-body-md">Settings</span>
+      </a>
+      <button id="exportBtn" class="mt-stack-lg w-full py-2.5 bg-primary text-white rounded-lg font-semibold text-body-md hover:bg-primary-container transition-colors">Export CSV</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="mainContent" class="md:ml-[280px] w-full">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="view-dashboard" class="view active p-4 md:p-margin-page">
+      <div class="max-w-container-max mx-auto">
+        <header class="mb-stack-lg">
+          <h1 class="font-h1 text-h1 text-on-surface">Financial Overview</h1>
+          <p class="text-on-surface-variant font-body-md mt-1">Real-time tracking for your tax liabilities and deductions.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-gutter">
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+            <div class="flex justify-between items-start mb-stack-md">
+              <div class="p-2 bg-surface-container-high rounded-lg"><span class="material-symbols-outlined text-primary">trending_up</span></div>
+            </div>
+            <p class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">Total Income</p>
+            <h2 id="kpiIncome" class="font-display text-display text-on-tertiary-container">$0.00</h2>
+          </div>
+
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+            <div class="flex justify-between items-start mb-stack-md">
+              <div class="p-2 bg-surface-container-high rounded-lg"><span class="material-symbols-outlined text-primary">payments</span></div>
+            </div>
+            <p class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">Total Spend</p>
+            <h2 id="kpiSpend" class="font-display text-display text-primary">$0.00</h2>
+          </div>
+
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+            <div class="flex justify-between items-start mb-stack-md">
+              <div class="p-2 bg-on-tertiary-container/10 rounded-lg"><span class="material-symbols-outlined text-on-tertiary-container">analytics</span></div>
+            </div>
+            <p class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">Total Deductible</p>
+            <h2 id="kpiDeductible" class="font-display text-display text-primary">$0.00</h2>
+          </div>
+
+          <div class="bg-primary-container text-on-primary-container border border-primary-container rounded-xl p-stack-lg">
+            <div class="flex justify-between items-start mb-stack-md">
+              <div class="p-2 bg-on-tertiary-container rounded-lg"><span class="material-symbols-outlined text-white">savings</span></div>
+            </div>
+            <p class="text-on-primary-container opacity-80 font-label-md text-label-md mb-1 uppercase tracking-wider">Total Claimable</p>
+            <h2 id="kpiClaimable" class="font-display text-display text-white">$0.00</h2>
+          </div>
+        </div>
+
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+          <div class="flex justify-between items-center mb-stack-lg">
+            <div>
+              <h3 class="font-h3 text-h3 text-primary">Income vs Expenses</h3>
+              <p class="text-on-surface-variant font-body-sm">Month-on-month trend</p>
+            </div>
+            <div class="flex items-center gap-stack-md text-body-sm">
+              <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-on-tertiary-container"></div><span class="text-on-surface-variant">Income</span></div>
+              <div class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-primary"></div><span class="text-on-surface-variant">Expenses</span></div>
+            </div>
+          </div>
+          <div class="relative h-80">
+            <canvas id="trendChart"></canvas>
+            <div id="chartEmpty" class="absolute inset-0 flex flex-col items-center justify-center text-on-surface-variant">
+              <span class="material-symbols-outlined" style="font-size:48px;">show_chart</span>
+              <p class="font-body-sm mt-2">No data yet — log an entry to populate the chart.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TAX LEDGER ============ -->
+    <section id="view-ledger" class="view p-4 md:p-margin-page">
+      <div class="max-w-container-max mx-auto space-y-stack-lg">
+        <div class="flex flex-wrap justify-between items-center gap-stack-sm">
+          <h1 class="font-h1 text-h1 text-on-surface">Tax Ledger</h1>
+          <button id="manageRecurringBtn" class="flex items-center gap-unit px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high transition-colors">
+            <span class="material-symbols-outlined text-base">autorenew</span> Recurring (<span id="recurringCount">0</span>)
+          </button>
+        </div>
+
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg flex flex-wrap items-end justify-between gap-stack-md">
+          <div class="flex flex-wrap gap-stack-md items-end">
+            <div class="space-y-unit">
+              <label class="font-label-md text-label-md text-on-surface-variant">TYPE</label>
+              <select id="filterType" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm min-w-[140px]">
+                <option value="all">All</option>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+            <div class="space-y-unit">
+              <label class="font-label-md text-label-md text-on-surface-variant">CATEGORY</label>
+              <select id="filterCategory" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm min-w-[160px]">
+                <option value="all">All Categories</option>
+              </select>
+            </div>
+            <div class="space-y-unit">
+              <label class="font-label-md text-label-md text-on-surface-variant">CLAIMABLE</label>
+              <select id="filterClaimable" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm min-w-[140px]">
+                <option value="all">All</option>
+                <option value="Claimed">Claimed</option>
+                <option value="Pending">Pending</option>
+                <option value="Flagged">Flagged</option>
+              </select>
+            </div>
+            <div class="space-y-unit">
+              <label class="font-label-md text-label-md text-on-surface-variant">MIN AMOUNT</label>
+              <input id="filterMin" type="number" min="0" step="0.01" placeholder="0.00" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm w-32"/>
+            </div>
+          </div>
+          <div class="flex gap-stack-sm">
+            <button id="clearFiltersBtn" class="flex items-center gap-unit px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high transition-colors">
+              <span class="material-symbols-outlined text-base">filter_alt_off</span> Clear
+            </button>
+            <button id="newEntryBtn" class="flex items-center gap-unit px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90 transition-opacity">
+              <span class="material-symbols-outlined text-base">add</span> New Entry
+            </button>
+          </div>
+        </section>
+
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-x-auto shadow-sm">
+          <table class="w-full text-left border-collapse min-w-[800px]">
+            <thead class="bg-surface-container-low border-b border-outline-variant">
+              <tr>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Date</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Type</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Category</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Description</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Amount (NZD)</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Deductible %</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Deduct. Amount</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Claimable</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Notes</th>
+                <th class="p-stack-md"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant" id="ledgerRows"></tbody>
+            <tfoot class="bg-surface-container border-t border-outline-variant font-bold">
+              <tr>
+                <td class="p-stack-md text-right text-on-surface-variant font-label-md" colspan="4">TOTALS</td>
+                <td id="footAmount" class="p-stack-md font-data-mono text-right">$0.00</td>
+                <td></td>
+                <td id="footDeduct" class="p-stack-md font-data-mono text-right text-primary text-lg">$0.00</td>
+                <td colspan="3"></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div id="ledgerEmpty" class="p-12 text-center text-on-surface-variant">
+            <span class="material-symbols-outlined" style="font-size:48px;">receipt_long</span>
+            <p class="font-body-md mt-2">No entries yet.</p>
+            <p class="font-body-sm">Click <strong>New Entry</strong>, or chat with the AI Assistant to log something.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RECURRING ============ -->
+    <section id="view-recurring" class="view p-4 md:p-margin-page">
+      <div class="max-w-container-max mx-auto space-y-stack-lg">
+        <div class="flex flex-wrap justify-between items-start gap-stack-sm">
+          <div class="flex-1 min-w-0">
+            <h1 class="font-h1 text-h1 text-on-surface">Recurring Rules</h1>
+            <p class="text-on-surface-variant font-body-md mt-1">Manage existing rules. To create new ones, use the AI Assistant or <strong>New Entry</strong> in the Tax Ledger.</p>
+          </div>
+          <button id="backToLedgerBtn" class="flex items-center gap-unit px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high transition-colors whitespace-nowrap">
+            <span class="material-symbols-outlined text-base">arrow_back</span> Back
+          </button>
+        </div>
+
+        <div id="recurringList" class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg"></div>
+
+        <div id="recurringEmpty" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-12 text-center text-on-surface-variant">
+          <span class="material-symbols-outlined" style="font-size:48px;">autorenew</span>
+          <p class="font-body-md mt-2">No recurring rules yet.</p>
+          <p class="font-body-sm">Ask the AI Assistant: <em>"Add a monthly recurring Adobe subscription of $89.99"</em>, or use <strong>New Entry</strong> in the Tax Ledger with "Make recurring" checked.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="view-settings" class="view p-4 md:p-margin-page">
+      <div class="max-w-3xl mx-auto space-y-stack-lg">
+        <header>
+          <h1 class="font-h1 text-h1 text-on-surface">Settings</h1>
+          <p class="text-on-surface-variant font-body-md mt-1">Configure your API connection, mileage rate, and team.</p>
+        </header>
+
+        <!-- API Configuration -->
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+          <div class="flex items-center gap-stack-md mb-stack-md">
+            <div class="p-2 bg-surface-container-high rounded-lg"><span class="material-symbols-outlined text-primary">key</span></div>
+            <div>
+              <h3 class="font-h3 text-h3 text-primary">Claude API</h3>
+              <p class="text-on-surface-variant font-body-sm">Powers the AI Assistant for chat and receipt OCR.</p>
+            </div>
+          </div>
+          <div class="space-y-stack-md">
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">API Key</label>
+              <div class="flex flex-col sm:flex-row gap-stack-sm">
+                <input id="apiKeyInput" type="password" placeholder="sk-ant-..." class="flex-1 border border-outline-variant rounded-lg p-stack-sm font-data-mono text-data-mono"/>
+                <button id="toggleKeyVisibility" type="button" class="px-3 py-2 border border-outline-variant rounded-lg hover:bg-surface-container-high flex items-center justify-center"><span class="material-symbols-outlined">visibility</span></button>
+              </div>
+              <p class="font-body-sm text-on-surface-variant mt-1">Stored only on this device. Get one at <span class="font-data-mono">console.anthropic.com</span>.</p>
+            </div>
+            <div class="flex justify-end">
+              <button id="saveApiBtn" class="px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90">Save API Key</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Gmail Invoice Scan -->
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+          <div class="flex items-center gap-stack-md mb-stack-md">
+            <div class="p-2 bg-surface-container-high rounded-lg"><span class="material-symbols-outlined text-primary">mail</span></div>
+            <div>
+              <h3 class="font-h3 text-h3 text-primary">Gmail Invoice Scan</h3>
+              <p class="text-on-surface-variant font-body-sm">Read-only access to find invoices/receipts and log them automatically when you open the app.</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-stack-md flex-wrap">
+            <div>
+              <p id="gmailStatusText" class="font-body-md text-body-md text-on-surface">Not connected</p>
+              <p id="gmailLastScanText" class="font-body-sm text-on-surface-variant"></p>
+            </div>
+            <div class="flex gap-stack-sm">
+              <button id="scanGmailBtn" type="button" class="hidden px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high">Scan now</button>
+              <button id="connectGmailBtn" type="button" class="px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90">Connect Gmail</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Mileage Rate -->
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+          <div class="flex items-center gap-stack-md mb-stack-md">
+            <div class="p-2 bg-surface-container-high rounded-lg"><span class="material-symbols-outlined text-primary">directions_car</span></div>
+            <div>
+              <h3 class="font-h3 text-h3 text-primary">Mileage Rate</h3>
+              <p class="text-on-surface-variant font-body-sm">Applied automatically when you log a trip via the AI Assistant.</p>
+            </div>
+          </div>
+          <div class="flex gap-stack-md items-end">
+            <div class="flex-1">
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">NZD per km</label>
+              <input id="mileageRateInput" type="number" step="0.01" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono text-data-mono" value="1.04"/>
+              <p class="font-body-sm text-on-surface-variant mt-1">IRD Tier 1 rate for business car use is $1.04/km up to 14,000km (2023-24).</p>
+            </div>
+            <button id="saveMileageBtn" class="px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90">Save</button>
+          </div>
+        </section>
+
+        <!-- Users & Invites -->
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+          <div class="flex items-center gap-stack-md mb-stack-md">
+            <div class="p-2 bg-surface-container-high rounded-lg"><span class="material-symbols-outlined text-primary">group</span></div>
+            <div>
+              <h3 class="font-h3 text-h3 text-primary">Users &amp; Invites</h3>
+              <p class="text-on-surface-variant font-body-sm">Manage your account email and invite teammates.</p>
+            </div>
+          </div>
+
+          <div class="space-y-stack-lg">
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Signed in as</label>
+              <div class="flex flex-col sm:flex-row gap-stack-sm items-start sm:items-center">
+                <div class="flex items-center gap-stack-sm flex-1 p-stack-sm bg-surface-container rounded-lg border border-outline-variant w-full sm:w-auto">
+                  <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-semibold" id="currentUserAvatar">?</div>
+                  <span id="currentUserEmail" class="font-body-md text-body-md flex-1">—</span>
+                </div>
+                <button id="signOutBtn" class="px-4 py-2 border border-outline text-on-surface rounded-lg font-body-sm font-semibold hover:bg-surface-container-high flex items-center justify-center gap-1">
+                  <span class="material-symbols-outlined text-base">logout</span> Sign Out
+                </button>
+              </div>
+              <p class="font-body-sm text-on-surface-variant mt-1">This is the email used as the "From" address on invite emails.</p>
+            </div>
+
+            <div class="border-t border-outline-variant pt-stack-md">
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Invite a Teammate</label>
+              <div class="flex flex-col sm:flex-row gap-stack-sm">
+                <input id="inviteEmailInput" type="email" placeholder="colleague@example.com" class="flex-1 border border-outline-variant rounded-lg p-stack-sm font-body-md"/>
+                <select id="inviteRoleInput" class="border border-outline-variant rounded-lg p-stack-sm">
+                  <option value="Editor">Editor</option>
+                  <option value="Viewer">Viewer</option>
+                  <option value="Admin">Admin</option>
+                </select>
+                <button id="sendInviteBtn" class="px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90 flex items-center justify-center gap-1">
+                  <span class="material-symbols-outlined text-base">send</span> Send Invite
+                </button>
+              </div>
+              <p class="font-body-sm text-on-surface-variant mt-1">Opens your default email app with a pre-filled invitation.</p>
+            </div>
+
+            <div class="border-t border-outline-variant pt-stack-md">
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-stack-sm uppercase">Team Members</label>
+              <div id="usersList" class="space-y-stack-sm"></div>
+              <div id="usersEmpty" class="text-center py-stack-lg text-on-surface-variant">
+                <span class="material-symbols-outlined" style="font-size:32px;">person_add</span>
+                <p class="font-body-sm mt-1">No teammates yet. Invite someone above.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Data Management -->
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
+          <div class="flex items-center gap-stack-md mb-stack-md">
+            <div class="p-2 bg-error-container rounded-lg"><span class="material-symbols-outlined text-on-error-container">warning</span></div>
+            <div>
+              <h3 class="font-h3 text-h3 text-primary">Data Management</h3>
+              <p class="text-on-surface-variant font-body-sm">Reset wipes every ledger entry, chat message, and invite from this device.</p>
+            </div>
+          </div>
+          <button id="resetDataBtn" class="px-4 py-2 border border-error text-error rounded-lg font-body-sm font-semibold hover:bg-error-container transition-colors">Reset all data</button>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============ AI ASSISTANT ============ -->
+    <section id="view-assistant" class="view flex-view flex-col" style="height: calc(100vh - 64px);">
+      <div id="chatLog" class="flex-1 overflow-y-auto p-4 md:p-margin-page bg-surface flex flex-col gap-stack-md md:gap-stack-lg">
+        <div class="flex justify-center mb-stack-lg">
+          <span class="text-label-md font-label-md text-outline px-stack-lg py-1 bg-surface-container-high rounded-full uppercase tracking-widest">Today</span>
+        </div>
+        <div class="flex justify-start">
+          <div class="max-w-[70%] flex gap-stack-md">
+            <div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-primary">smart_toy</span>
+            </div>
+            <div class="bg-surface-container-lowest border border-outline-variant p-stack-lg rounded-xl rounded-tl-none shadow-sm">
+              <p class="font-body-md text-body-md text-on-surface">Hi — I'm your tax assistant. Tell me about an expense or trip in plain English, or attach a receipt/invoice (photo or PDF) and I'll log it for you.</p>
+              <p class="font-body-sm text-on-surface-variant mt-2 italic">Try: "Lodge a trip from 39 Hastings Rd, Mairangi Bay to 339A Glenvar Rd, Long Bay"</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="p-4 md:p-margin-page bg-surface-bright border-t border-outline-variant">
+        <div class="max-w-container-max mx-auto relative">
+          <div id="pendingAttachment" class="hidden mb-stack-sm items-center gap-stack-sm bg-surface-container-low border border-outline-variant rounded-lg p-stack-sm w-fit">
+            <img id="pendingPreview" class="hidden w-12 h-12 object-cover rounded bg-surface-container-high" alt="pending"/>
+            <div id="pendingPdfIcon" class="hidden w-12 h-12 rounded bg-surface-container-high items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-on-surface-variant">picture_as_pdf</span>
+            </div>
+            <span id="pendingStatus" class="font-body-sm text-on-surface-variant">Receipt ready to send</span>
+            <button id="clearAttachment" class="p-1 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined text-[18px]">close</span></button>
+          </div>
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg p-stack-sm flex items-end gap-stack-md focus-within:ring-2 focus-within:ring-primary-fixed transition-all">
+            <input id="fileInput" type="file" accept="image/*,application/pdf" class="hidden"/>
+            <button id="attachBtn" class="p-2 hover:bg-surface-container-high rounded-lg text-on-surface-variant transition-colors mb-1" title="Attach receipt or invoice (image or PDF)">
+              <span class="material-symbols-outlined">attach_file</span>
+            </button>
+            <div class="flex-1 py-2 px-1">
+              <textarea id="chatInput" class="w-full bg-transparent border-none focus:ring-0 text-body-md resize-none py-1" placeholder="Type a message and press Enter (Shift+Enter for newline)..." rows="1" style="min-height: 40px; max-height: 200px;"></textarea>
+            </div>
+            <button id="sendBtn" class="bg-primary text-on-primary p-3 rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity mb-1 disabled:opacity-40">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+            </button>
+          </div>
+        </div>
+      </footer>
+    </section>
+
+  </main>
+</div>
+
+
+<!-- ============ NEW ENTRY MODAL ============ -->
+<div id="entryModal" class="modal-backdrop fixed inset-0 bg-inverse-surface/40 z-[80] items-center justify-center backdrop-blur-[2px]">
+  <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-lg p-stack-lg max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-stack-lg">
+      <h2 id="entryModalTitle" class="font-h2 text-h2 text-primary">New Entry</h2>
+      <button class="closeModal p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form id="entryForm" class="space-y-stack-md" onsubmit="event.preventDefault()">
+      <input type="hidden" id="entryId"/>
+      <div class="grid grid-cols-2 gap-stack-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Type</label>
+          <select id="entryType" class="w-full border border-outline-variant rounded-lg p-stack-sm">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Date</label>
+          <input id="entryDate" type="date" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
+        </div>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Category</label>
+        <input id="entryCategory" type="text" list="categoryList" class="w-full border border-outline-variant rounded-lg p-stack-sm" placeholder="e.g. Software, Travel..."/>
+        <datalist id="categoryList">
+          <option value="Software"></option><option value="Travel"></option><option value="Utility"></option>
+          <option value="Hardware"></option><option value="Dining"></option><option value="Office"></option>
+          <option value="Marketing"></option><option value="Consulting"></option><option value="Income"></option>
+          <option value="Other"></option>
+        </datalist>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Description</label>
+        <input id="entryDesc" type="text" class="w-full border border-outline-variant rounded-lg p-stack-sm"/>
+      </div>
+      <div class="grid grid-cols-2 gap-stack-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Amount (NZD)</label>
+          <input id="entryAmount" type="number" step="0.01" min="0" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
+        </div>
+        <div id="entryPctWrap">
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Deductible %</label>
+          <input id="entryPct" type="number" min="0" max="100" step="1" value="100" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
+        </div>
+      </div>
+      <div id="entryClaimableWrap">
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Claimable Status</label>
+        <select id="entryClaimable" class="w-full border border-outline-variant rounded-lg p-stack-sm">
+          <option value="Pending">Pending</option>
+          <option value="Claimed">Claimed</option>
+          <option value="Flagged">Flagged</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Notes</label>
+        <textarea id="entryNotes" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-sm" rows="2"></textarea>
+      </div>
+
+      <div class="pt-stack-md border-t border-outline-variant">
+        <label class="flex items-center gap-stack-sm cursor-pointer">
+          <input type="checkbox" id="entryRecurring" class="w-4 h-4 accent-primary"/>
+          <span class="font-body-md text-body-md text-on-surface">Make this a recurring entry</span>
+        </label>
+        <div id="entryRecurringFields" class="hidden mt-stack-md grid grid-cols-2 gap-stack-md">
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Frequency</label>
+            <select id="entryFrequency" class="w-full border border-outline-variant rounded-lg p-stack-sm">
+              <option value="every4weeks">Every 4 weeks</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">End Date (optional)</label>
+            <input id="entryEndDate" type="date" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center pt-stack-md border-t border-outline-variant">
+        <button id="deleteEntryBtn" type="button" class="text-error font-body-sm font-semibold hover:underline hidden">Delete</button>
+        <div class="flex gap-stack-sm ml-auto">
+          <button type="button" class="closeModal px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high">Cancel</button>
+          <button id="saveEntryBtn" type="button" class="px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ RECURRING MODAL ============ -->
+<div id="recurringModal" class="modal-backdrop fixed inset-0 bg-inverse-surface/40 z-[80] items-center justify-center backdrop-blur-[2px]">
+  <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-lg p-stack-lg max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-stack-lg">
+      <h2 id="recurringModalTitle" class="font-h2 text-h2 text-primary">New Recurring Rule</h2>
+      <button class="closeModal p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form id="recurringForm" class="space-y-stack-md" onsubmit="event.preventDefault()">
+      <input type="hidden" id="recurringId"/>
+      <div class="grid grid-cols-2 gap-stack-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Type</label>
+          <select id="recType" class="w-full border border-outline-variant rounded-lg p-stack-sm">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Start Date</label>
+          <input id="recStartDate" type="date" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
+        </div>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Description</label>
+        <input id="recDesc" type="text" placeholder="e.g. Adobe Creative Cloud" class="w-full border border-outline-variant rounded-lg p-stack-sm"/>
+      </div>
+      <div class="grid grid-cols-2 gap-stack-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Category</label>
+          <input id="recCategory" type="text" list="categoryList" class="w-full border border-outline-variant rounded-lg p-stack-sm"/>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Amount (NZD)</label>
+          <input id="recAmount" type="number" step="0.01" min="0" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
+        </div>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Frequency</label>
+        <select id="recFrequency" class="w-full border border-outline-variant rounded-lg p-stack-sm">
+          <option value="every4weeks">Every 4 weeks</option>
+          <option value="monthly" selected>Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-stack-md" id="recExpenseFields">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Deductible %</label>
+          <input id="recPct" type="number" min="0" max="100" step="1" value="100" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Claimable</label>
+          <select id="recClaimable" class="w-full border border-outline-variant rounded-lg p-stack-sm">
+            <option value="Pending">Pending</option>
+            <option value="Claimed">Claimed</option>
+            <option value="Flagged">Flagged</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">End Date (optional)</label>
+        <input id="recEndDate" type="date" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
+        <p class="font-body-sm text-on-surface-variant mt-1">Leave blank for indefinite.</p>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Notes</label>
+        <textarea id="recNotes" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-sm" rows="2"></textarea>
+      </div>
+      <div class="flex justify-between items-center pt-stack-md border-t border-outline-variant">
+        <button id="deleteRecurringBtn" type="button" class="text-error font-body-sm font-semibold hover:underline hidden">Delete</button>
+        <div class="flex gap-stack-sm ml-auto">
+          <button type="button" class="closeModal px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high">Cancel</button>
+          <button id="saveRecurringBtn" type="button" class="px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// SUPABASE CLIENT
+// ============================================================================
+const SUPABASE_URL = "https://btdifnbdabfxrwoxidrc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_uBsPXV4Zfin5IaJ9K1VDXA_Lr_aMt66";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================================
+// STATE
+// ============================================================================
+// Chat stays per-device (conversational, not synced). Everything else lives in Supabase.
+const STORAGE_KEYS = { chat: "tp_chat" };
+
+let currentUser = null;       // Supabase auth user
+let profile = {};             // row from profiles table (api_key, mileage_rate)
+let ledger = [];              // synced from ledger_entries
+let recurring = [];           // synced from recurring_rules
+let users = [];               // synced from team_invites
+let chatHistory = JSON.parse(localStorage.getItem(STORAGE_KEYS.chat) || "[]");
+let pendingImage = null;
+let trendChart = null;
+let realtimeChannel = null;
+
+const fmt = (n) => "$" + (n || 0).toLocaleString("en-NZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function saveChat() {
+  try {
+    localStorage.setItem(STORAGE_KEYS.chat, JSON.stringify(chatHistory));
+  } catch (e) {
+    // Quota exceeded — drop image payloads from older messages, then retry.
+    console.warn("Chat storage quota hit, slimming history.", e);
+    chatHistory = chatHistory.map((m, i) => {
+      if (i >= chatHistory.length - 4) return m; // keep last 4 messages intact
+      return { ...m, image: null, base64: null };
+    });
+    try {
+      localStorage.setItem(STORAGE_KEYS.chat, JSON.stringify(chatHistory));
+    } catch (e2) {
+      // Still too big — keep only last 10 messages, no images
+      chatHistory = chatHistory.slice(-10).map(m => ({ ...m, image: null, base64: null }));
+      try { localStorage.setItem(STORAGE_KEYS.chat, JSON.stringify(chatHistory)); } catch (_) {}
+    }
+  }
+}
+
+// ============================================================================
+// DB <-> JS shape mapping
+// ============================================================================
+function ledgerFromDB(row) {
+  return {
+    id: row.id, type: row.type, date: row.date,
+    category: row.category || "", description: row.description || "",
+    amount: parseFloat(row.amount), deductible_pct: parseFloat(row.deductible_pct) || 0,
+    claimable: row.claimable, notes: row.notes || ""
+  };
+}
+function ledgerToDB(e) {
+  return {
+    user_id: currentUser.id, type: e.type, date: e.date,
+    category: e.category, description: e.description, amount: e.amount,
+    deductible_pct: e.deductible_pct, claimable: e.claimable, notes: e.notes
+  };
+}
+function recurringFromDB(row) {
+  return {
+    id: row.id, type: row.type, date: row.start_date, endDate: row.end_date,
+    description: row.description || "", category: row.category || "",
+    amount: parseFloat(row.amount), frequency: row.frequency,
+    deductible_pct: parseFloat(row.deductible_pct) || 0,
+    claimable: row.claimable, notes: row.notes || "",
+    active: row.active, lastRun: row.last_run
+  };
+}
+function recurringToDB(r) {
+  return {
+    user_id: currentUser.id, type: r.type, start_date: r.date, end_date: r.endDate || null,
+    description: r.description, category: r.category, amount: r.amount,
+    frequency: r.frequency, deductible_pct: r.deductible_pct, claimable: r.claimable,
+    notes: r.notes, active: r.active, last_run: r.lastRun || null
+  };
+}
+
+// ============================================================================
+// DATA LOADERS
+// ============================================================================
+async function loadProfile() {
+  const { data, error } = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
+  if (error && error.code !== "PGRST116") console.error("loadProfile", error);
+  profile = data || { id: currentUser.id, email: currentUser.email, api_key: null, mileage_rate: 1.04 };
+}
+async function loadLedger() {
+  const { data, error } = await sb.from("ledger_entries").select("*").eq("user_id", currentUser.id).order("date", { ascending: false });
+  if (error) { console.error("loadLedger", error); return; }
+  ledger = (data || []).map(ledgerFromDB);
+}
+async function loadRecurring() {
+  const { data, error } = await sb.from("recurring_rules").select("*").eq("user_id", currentUser.id);
+  if (error) { console.error("loadRecurring", error); return; }
+  recurring = (data || []).map(recurringFromDB);
+}
+async function loadInvites() {
+  const { data, error } = await sb.from("team_invites").select("*").eq("owner_id", currentUser.id).order("invited_at", { ascending: false });
+  if (error) { console.error("loadInvites", error); return; }
+  users = data || [];
+}
+async function loadAll() {
+  await Promise.all([loadProfile(), loadLedger(), loadRecurring(), loadInvites()]);
+}
+
+// ============================================================================
+// PROFILE / SETTINGS
+// ============================================================================
+async function updateProfile(fields) {
+  const { error } = await sb.from("profiles").update(fields).eq("id", currentUser.id);
+  if (error) { console.error("updateProfile", error); throw error; }
+  Object.assign(profile, fields);
+}
+
+// ============================================================================
+// LEDGER CRUD
+// ============================================================================
+async function createLedgerEntry(entry) {
+  const { data, error } = await sb.from("ledger_entries").insert(ledgerToDB(entry)).select().single();
+  if (error) { console.error("createLedger", error); throw error; }
+  return ledgerFromDB(data);
+}
+async function updateLedgerEntry(id, entry) {
+  const { error } = await sb.from("ledger_entries").update(ledgerToDB(entry)).eq("id", id);
+  if (error) { console.error("updateLedger", error); throw error; }
+}
+async function deleteLedgerEntry(id) {
+  const { error } = await sb.from("ledger_entries").delete().eq("id", id);
+  if (error) { console.error("deleteLedger", error); throw error; }
+}
+
+// ============================================================================
+// RECURRING CRUD
+// ============================================================================
+async function createRecurringRule(rule) {
+  const { data, error } = await sb.from("recurring_rules").insert(recurringToDB(rule)).select().single();
+  if (error) { console.error("createRecurring", error); throw error; }
+  return recurringFromDB(data);
+}
+async function updateRecurringRule(id, rule) {
+  const { error } = await sb.from("recurring_rules").update(recurringToDB(rule)).eq("id", id);
+  if (error) { console.error("updateRecurring", error); throw error; }
+}
+async function deleteRecurringRule(id) {
+  const { error } = await sb.from("recurring_rules").delete().eq("id", id);
+  if (error) { console.error("deleteRecurring", error); throw error; }
+}
+
+// ============================================================================
+// TEAM INVITES
+// ============================================================================
+async function createInvite(invite) {
+  const { data, error } = await sb.from("team_invites").insert({
+    owner_id: currentUser.id, email: invite.email, role: invite.role, status: "Invited"
+  }).select().single();
+  if (error) { console.error("createInvite", error); throw error; }
+  return data;
+}
+async function deleteInvite(id) {
+  const { error } = await sb.from("team_invites").delete().eq("id", id);
+  if (error) { console.error("deleteInvite", error); throw error; }
+}
+
+// ============================================================================
+// NAVIGATION
+// ============================================================================
+function setView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("view-" + name).classList.add("active");
+  const navItem = document.querySelector(`.nav-item[data-view="${name}"]`);
+  if (navItem) navItem.classList.add("active");
+  closeExpensePanel();
+  closeDrawer();
+  if (name === "dashboard") renderDashboard();
+  if (name === "ledger") renderLedger();
+  if (name === "settings") renderSettings();
+  if (name === "recurring") renderRecurring();
+}
+document.querySelectorAll(".nav-item").forEach(n => {
+  n.addEventListener("click", () => setView(n.dataset.view));
+});
+
+// Mobile drawer
+function openDrawer() {
+  document.getElementById("sideNav").classList.add("open");
+  document.getElementById("navBackdrop").classList.add("open");
+}
+function closeDrawer() {
+  document.getElementById("sideNav").classList.remove("open");
+  document.getElementById("navBackdrop").classList.remove("open");
+}
+document.getElementById("hamburgerBtn").addEventListener("click", openDrawer);
+document.getElementById("navBackdrop").addEventListener("click", closeDrawer);
+
+// ============================================================================
+// MODALS
+// ============================================================================
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+document.querySelectorAll(".closeModal").forEach(b => {
+  b.addEventListener("click", () => b.closest(".modal-backdrop").classList.remove("open"));
+});
+document.querySelectorAll(".modal-backdrop").forEach(m => {
+  m.addEventListener("click", (e) => { if (e.target === m) m.classList.remove("open"); });
+});
+
+// ============================================================================
+// SETTINGS SCREEN
+// ============================================================================
+document.getElementById("settingsBtn").addEventListener("click", () => setView("settings"));
+document.getElementById("apiStatus").addEventListener("click", () => setView("settings"));
+
+function renderSettings() {
+  document.getElementById("apiKeyInput").value = profile.api_key || "";
+  document.getElementById("mileageRateInput").value = profile.mileage_rate || "1.04";
+  if (currentUser) {
+    document.getElementById("currentUserEmail").textContent = currentUser.email;
+    document.getElementById("currentUserAvatar").textContent = (currentUser.email || "?").charAt(0).toUpperCase();
+  }
+  renderUsers();
+  updateGmailStatusUI();
+}
+
+document.getElementById("toggleKeyVisibility").addEventListener("click", () => {
+  const inp = document.getElementById("apiKeyInput");
+  const icon = document.querySelector("#toggleKeyVisibility span");
+  if (inp.type === "password") { inp.type = "text"; icon.textContent = "visibility_off"; }
+  else { inp.type = "password"; icon.textContent = "visibility"; }
+});
+
+document.getElementById("saveApiBtn").addEventListener("click", async () => {
+  const key = document.getElementById("apiKeyInput").value.trim();
+  try {
+    await updateProfile({ api_key: key || null });
+    updateApiStatus();
+    toast("API key saved.");
+  } catch (e) { alert("Failed to save: " + e.message); }
+});
+
+document.getElementById("saveMileageBtn").addEventListener("click", async () => {
+  const rate = parseFloat(document.getElementById("mileageRateInput").value) || 1.04;
+  try {
+    await updateProfile({ mileage_rate: rate });
+    toast("Mileage rate saved.");
+  } catch (e) { alert("Failed to save: " + e.message); }
+});
+
+// ============================================================================
+// GMAIL INVOICE SCAN (client-side OAuth, no server involved)
+// ============================================================================
+const GOOGLE_CLIENT_ID = "996388804451-26hdq9ib73h82b738nullfohaaave4kc.apps.googleusercontent.com";
+const GMAIL_SCAN_PROMPT = `You are extracting a tax ledger entry from a single email. Respond with ONLY a JSON object, no other text.
+
+If this email is a genuine invoice, receipt, or payment confirmation:
+{"is_entry": true, "type": "income"|"expense", "date": "YYYY-MM-DD", "description": "short vendor/client + what for", "category": "short category", "amount": number, "deductible_pct": number, "claimable": true|false, "notes": "optional, e.g. currency if not NZD"}
+
+Otherwise (marketing, newsletter, unrelated, or too ambiguous to be confident):
+{"is_entry": false}
+
+Rules:
+- type "income" = an invoice the user SENT to a client, or a payment-received notification for one they issued.
+- type "expense" = a bill/receipt/subscription charge the user is PAYING to someone else.
+- deductible_pct: default 100. Use 50 for meals/entertainment, 15 for home utilities.
+- claimable: false if obviously personal/non-business.
+- date: use the invoice/transaction date if present in the email, else today's date {{TODAY}}.
+- When genuinely unsure whether this is a real transaction record, respond {"is_entry": false}.`;
+
+let gmailAccessToken = null;
+let gmailTokenExpiresAt = 0;
+let gmailLastScanAt = localStorage.getItem("tp_gmail_last_scan") ? new Date(localStorage.getItem("tp_gmail_last_scan")) : null;
+
+function getGmailTokenClient(callback) {
+  if (!window.google?.accounts?.oauth2) return null;
+  return google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: "https://www.googleapis.com/auth/gmail.readonly",
+    callback
+  });
+}
+
+function updateGmailStatusUI() {
+  const statusEl = document.getElementById("gmailStatusText");
+  const lastEl = document.getElementById("gmailLastScanText");
+  const connectBtn = document.getElementById("connectGmailBtn");
+  const scanBtn = document.getElementById("scanGmailBtn");
+  if (!statusEl) return;
+  const connected = !!gmailAccessToken && Date.now() < gmailTokenExpiresAt;
+  statusEl.textContent = connected ? "Connected" : "Not connected";
+  statusEl.className = "font-body-md text-body-md " + (connected ? "text-on-tertiary-container font-semibold" : "text-on-surface");
+  lastEl.textContent = gmailLastScanAt ? "Last scan: " + gmailLastScanAt.toLocaleString("en-NZ") : "";
+  connectBtn.textContent = connected ? "Reconnect" : "Connect Gmail";
+  scanBtn.classList.toggle("hidden", !connected);
+}
+
+function onGmailToken(resp) {
+  if (resp.error) { console.error("Gmail auth error", resp); toast("Gmail connection failed."); updateGmailStatusUI(); return; }
+  gmailAccessToken = resp.access_token;
+  gmailTokenExpiresAt = Date.now() + (resp.expires_in * 1000);
+  sessionStorage.setItem("tp_gmail_token", gmailAccessToken);
+  sessionStorage.setItem("tp_gmail_token_exp", String(gmailTokenExpiresAt));
+  updateGmailStatusUI();
+  scanGmailForInvoices();
+}
+
+document.getElementById("connectGmailBtn").addEventListener("click", () => {
+  if (!profile.api_key) { alert("Add your Claude API key above first — it's used to read each email."); return; }
+  const client = getGmailTokenClient(onGmailToken);
+  if (!client) { alert("Google sign-in is still loading — try again in a second."); return; }
+  client.requestAccessToken({ prompt: "consent" });
+});
+
+document.getElementById("scanGmailBtn").addEventListener("click", () => {
+  if (!gmailAccessToken || Date.now() >= gmailTokenExpiresAt) { toast("Reconnect Gmail first."); return; }
+  scanGmailForInvoices();
+});
+
+// On app open, reuse a still-valid token from this browser session so the scan feels automatic
+// without popping a Google consent window unprompted.
+function initGmailFromCache() {
+  const savedToken = sessionStorage.getItem("tp_gmail_token");
+  const savedExp = parseInt(sessionStorage.getItem("tp_gmail_token_exp") || "0", 10);
+  if (savedToken && Date.now() < savedExp) {
+    gmailAccessToken = savedToken;
+    gmailTokenExpiresAt = savedExp;
+    if (profile.api_key) scanGmailForInvoices();
+  }
+  updateGmailStatusUI();
+}
+
+function decodeB64Url(data) {
+  try {
+    const b64 = data.replace(/-/g, "+").replace(/_/g, "/");
+    return decodeURIComponent(atob(b64).split("").map(c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join(""));
+  } catch (e) { return ""; }
+}
+
+function extractEmailText(msg) {
+  const headers = (msg.payload && msg.payload.headers) || [];
+  const get = (name) => (headers.find(h => h.name === name) || {}).value || "";
+  let body = "";
+  function walk(part) {
+    if (!part) return;
+    if (part.mimeType === "text/plain" && part.body && part.body.data) body += decodeB64Url(part.body.data);
+    else if (part.parts) part.parts.forEach(walk);
+  }
+  if (msg.payload && msg.payload.body && msg.payload.body.data) body += decodeB64Url(msg.payload.body.data);
+  walk(msg.payload);
+  if (!body) body = msg.snippet || "";
+  return `From: ${get("From")}\nDate: ${get("Date")}\nSubject: ${get("Subject")}\n\n${body}`.slice(0, 6000);
+}
+
+async function classifyEmailForLedger(emailText) {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": profile.api_key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-5",
+        max_tokens: 512,
+        system: GMAIL_SCAN_PROMPT.replace("{{TODAY}}", today),
+        messages: [{ role: "user", content: emailText }]
+      })
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const text = (data.content && data.content[0] && data.content[0].text) || "";
+    const m = text.match(/\{[\s\S]*\}/);
+    return m ? JSON.parse(m[0]) : null;
+  } catch (e) {
+    console.error("classifyEmailForLedger failed", e);
+    return null;
+  }
+}
+
+async function scanGmailForInvoices() {
+  if (!gmailAccessToken || !profile.api_key || !currentUser) return;
+  const statusEl = document.getElementById("gmailStatusText");
+  try {
+    const q = encodeURIComponent("newer_than:3d (invoice OR receipt OR payment OR bill OR subscription)");
+    const listResp = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=10`, {
+      headers: { Authorization: "Bearer " + gmailAccessToken }
+    });
+    if (!listResp.ok) throw new Error("Gmail search failed (" + listResp.status + ")");
+    const listData = await listResp.json();
+    const messages = listData.messages || [];
+    const rows = [];
+    for (const m of messages) {
+      const msgResp = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`, {
+        headers: { Authorization: "Bearer " + gmailAccessToken }
+      });
+      if (!msgResp.ok) continue;
+      const msg = await msgResp.json();
+      const entry = await classifyEmailForLedger(extractEmailText(msg));
+      if (entry && entry.is_entry) {
+        rows.push({
+          user_id: currentUser.id, type: entry.type, date: entry.date,
+          category: entry.category, description: entry.description, amount: entry.amount,
+          deductible_pct: entry.deductible_pct, claimable: entry.claimable, notes: entry.notes || "",
+          gmail_message_id: m.id
+        });
+      }
+    }
+    if (rows.length) {
+      const { data, error } = await sb.from("ledger_entries").upsert(rows, { onConflict: "gmail_message_id", ignoreDuplicates: true }).select();
+      if (error) throw error;
+      const logged = (data || []).length;
+      if (logged) {
+        await loadLedger();
+        renderLedger(); renderDashboard();
+        toast(`${logged} ${logged === 1 ? "entry" : "entries"} logged from Gmail.`);
+      }
+    }
+    gmailLastScanAt = new Date();
+    localStorage.setItem("tp_gmail_last_scan", gmailLastScanAt.toISOString());
+    updateGmailStatusUI();
+  } catch (e) {
+    console.error("Gmail scan failed", e);
+    if (statusEl) statusEl.textContent = "Scan failed: " + e.message;
+  }
+}
+
+document.getElementById("signOutBtn").addEventListener("click", async () => {
+  if (!confirm("Sign out? Your data stays in the cloud — sign in again from any device.")) return;
+  await sb.auth.signOut();
+});
+
+function isValidEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+
+document.getElementById("sendInviteBtn").addEventListener("click", async () => {
+  const email = document.getElementById("inviteEmailInput").value.trim();
+  const role = document.getElementById("inviteRoleInput").value;
+  if (!isValidEmail(email)) { alert("Please enter a valid email address."); return; }
+  if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+    alert("That email is already in your team list."); return;
+  }
+
+  try {
+    const row = await createInvite({ email, role });
+    users.unshift(row);
+    renderUsers();
+
+    const subject = encodeURIComponent("You're invited to TaxPrecision");
+    const body = encodeURIComponent(
+      `Hi,\n\n${currentUser.email} has invited you to collaborate on TaxPrecision as a ${role}.\n\n` +
+      `TaxPrecision is a personal tax-tracking app that uses AI to log expenses, trips, and receipts.\n\n` +
+      `To get started, open the app and sign in with this email (${email}).\n\n` +
+      `— Sent from TaxPrecision`
+    );
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    document.getElementById("inviteEmailInput").value = "";
+    toast(`Invite drafted for ${email}.`);
+  } catch (e) { alert("Failed to create invite: " + e.message); }
+});
+
+function renderUsers() {
+  const list = document.getElementById("usersList");
+  const empty = document.getElementById("usersEmpty");
+  if (users.length === 0) {
+    list.innerHTML = ""; empty.style.display = "block"; return;
+  }
+  empty.style.display = "none";
+  list.innerHTML = users.map((u, i) => `
+    <div class="flex items-center gap-stack-md p-stack-md border border-outline-variant rounded-lg">
+      <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-semibold">
+        ${escapeHtml(u.email.charAt(0).toUpperCase())}
+      </div>
+      <div class="flex-1">
+        <p class="font-body-md text-body-md text-on-surface">${escapeHtml(u.email)}</p>
+        <p class="font-label-md text-label-md text-on-surface-variant">${escapeHtml(u.role)} · ${escapeHtml(u.status)}</p>
+      </div>
+      <button class="resend-btn px-3 py-1 border border-outline-variant rounded-lg font-label-md hover:bg-surface-container-high" data-i="${i}">Resend</button>
+      <button class="remove-btn p-2 hover:bg-error-container rounded-full text-error" data-i="${i}" title="Remove"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".remove-btn").forEach(b => {
+    b.addEventListener("click", async () => {
+      const i = parseInt(b.dataset.i, 10);
+      if (!confirm(`Remove ${users[i].email} from your team?`)) return;
+      try {
+        await deleteInvite(users[i].id);
+        users.splice(i, 1);
+        renderUsers();
+      } catch (e) { alert("Failed to remove: " + e.message); }
+    });
+  });
+  list.querySelectorAll(".resend-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      const u = users[parseInt(b.dataset.i, 10)];
+      const subject = encodeURIComponent("Reminder: You're invited to TaxPrecision");
+      const body = encodeURIComponent(`Hi,\n\nFollowing up on my invite to TaxPrecision as a ${u.role}.\n\n— ${currentUser.email}`);
+      window.location.href = `mailto:${u.email}?subject=${subject}&body=${body}`;
+    });
+  });
+}
+
+document.getElementById("resetDataBtn").addEventListener("click", async () => {
+  if (!confirm("Wipe all ledger entries, recurring rules, team invites, and local chat history? This cannot be undone.")) return;
+  try {
+    await Promise.all([
+      sb.from("ledger_entries").delete().eq("user_id", currentUser.id),
+      sb.from("recurring_rules").delete().eq("user_id", currentUser.id),
+      sb.from("team_invites").delete().eq("owner_id", currentUser.id)
+    ]);
+    ledger = []; chatHistory = []; users = []; recurring = [];
+    saveChat();
+    renderDashboard(); renderLedger(); renderChat(); renderUsers(); renderRecurring();
+    toast("Data reset.");
+  } catch (e) { alert("Failed to reset: " + e.message); }
+});
+
+// ============================================================================
+// RECURRING
+// ============================================================================
+function incrementDate(dateStr, freq) {
+  const d = new Date(dateStr + "T00:00:00");
+  if (freq === "every4weeks") d.setDate(d.getDate() + 28);
+  else if (freq === "monthly") d.setMonth(d.getMonth() + 1);
+  else if (freq === "quarterly") d.setMonth(d.getMonth() + 3);
+  else if (freq === "yearly") d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function frequencyLabel(freq) {
+  return { every4weeks: "Every 4 weeks", monthly: "Monthly", quarterly: "Quarterly", yearly: "Yearly" }[freq] || freq;
+}
+
+function nextDueDate(rule) {
+  const today = new Date().toISOString().slice(0, 10);
+  let candidate = rule.lastRun ? incrementDate(rule.lastRun, rule.frequency) : rule.date;
+  if (candidate < today) candidate = today;
+  return candidate;
+}
+
+async function processRecurring() {
+  if (!currentUser) return 0;
+  const today = new Date().toISOString().slice(0, 10);
+  const toInsert = [];
+  const rulesToUpdate = [];
+
+  recurring.forEach(rule => {
+    if (!rule.active) return;
+    let cur = rule.lastRun ? incrementDate(rule.lastRun, rule.frequency) : rule.date;
+    let touched = false;
+    while (cur <= today) {
+      if (rule.endDate && cur > rule.endDate) break;
+      toInsert.push({
+        user_id: currentUser.id,
+        type: rule.type, date: cur,
+        category: rule.category, description: rule.description,
+        amount: rule.amount,
+        deductible_pct: rule.type === "income" ? 0 : (rule.deductible_pct ?? 100),
+        claimable: rule.type === "income" ? null : (rule.claimable || "Pending"),
+        notes: (rule.notes ? rule.notes + " · " : "") + "Auto-logged from recurring rule"
+      });
+      rule.lastRun = cur;
+      cur = incrementDate(cur, rule.frequency);
+      touched = true;
+    }
+    if (touched) rulesToUpdate.push(rule);
+  });
+
+  if (toInsert.length > 0) {
+    const { data, error } = await sb.from("ledger_entries").insert(toInsert).select();
+    if (error) { console.error("processRecurring insert", error); return 0; }
+    (data || []).forEach(row => ledger.unshift(ledgerFromDB(row)));
+    await Promise.all(rulesToUpdate.map(r =>
+      sb.from("recurring_rules").update({ last_run: r.lastRun }).eq("id", r.id)
+    ));
+  }
+  return toInsert.length;
+}
+
+function renderRecurring() {
+  const list = document.getElementById("recurringList");
+  const empty = document.getElementById("recurringEmpty");
+  if (recurring.length === 0) {
+    list.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  list.innerHTML = recurring.map((r, i) => {
+    const next = r.active ? nextDueDate(r) : "Paused";
+    const typeBadge = r.type === "income"
+      ? `<span class="bg-on-tertiary-container/15 text-on-tertiary-container text-[10px] px-2 py-0.5 rounded uppercase font-bold">Income</span>`
+      : `<span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded uppercase font-bold">Expense</span>`;
+    return `
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg ${!r.active ? "opacity-60" : ""}">
+        <div class="flex items-start justify-between mb-stack-sm">
+          <div class="flex-1">
+            <div class="flex items-center gap-stack-sm mb-1">${typeBadge}<span class="font-label-md text-label-md text-on-surface-variant">${escapeHtml(r.category || "")}</span></div>
+            <h3 class="font-h3 text-h3 text-primary">${escapeHtml(r.description || "(no description)")}</h3>
+          </div>
+          <p class="font-display text-h2 text-primary">${fmt(r.amount)}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-stack-sm pt-stack-md border-t border-outline-variant">
+          <div>
+            <p class="font-label-md text-label-md text-on-surface-variant uppercase">Frequency</p>
+            <p class="font-body-sm text-on-surface">${frequencyLabel(r.frequency)}</p>
+          </div>
+          <div>
+            <p class="font-label-md text-label-md text-on-surface-variant uppercase">Next Due</p>
+            <p class="font-body-sm text-on-surface font-data-mono">${next}</p>
+          </div>
+        </div>
+        <div class="flex gap-stack-sm mt-stack-md pt-stack-md border-t border-outline-variant">
+          <button class="rec-toggle px-3 py-1 border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-high flex items-center gap-1" data-i="${i}">
+            <span class="material-symbols-outlined text-[16px]">${r.active ? "pause" : "play_arrow"}</span>
+            ${r.active ? "Pause" : "Resume"}
+          </button>
+          <button class="rec-edit px-3 py-1 border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-high flex items-center gap-1" data-i="${i}">
+            <span class="material-symbols-outlined text-[16px]">edit</span> Edit
+          </button>
+          <button class="rec-delete ml-auto p-2 hover:bg-error-container rounded text-error" data-i="${i}" title="Delete">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  list.querySelectorAll(".rec-toggle").forEach(b => b.addEventListener("click", async () => {
+    const i = parseInt(b.dataset.i, 10);
+    recurring[i].active = !recurring[i].active;
+    try {
+      await sb.from("recurring_rules").update({ active: recurring[i].active }).eq("id", recurring[i].id);
+      renderRecurring();
+    } catch (e) { alert("Failed: " + e.message); }
+  }));
+  list.querySelectorAll(".rec-edit").forEach(b => b.addEventListener("click", () => {
+    openRecurringModal(parseInt(b.dataset.i, 10));
+  }));
+  list.querySelectorAll(".rec-delete").forEach(b => b.addEventListener("click", async () => {
+    const i = parseInt(b.dataset.i, 10);
+    if (!confirm("Delete this recurring rule? Past entries it generated will stay in the ledger.")) return;
+    try {
+      await deleteRecurringRule(recurring[i].id);
+      recurring.splice(i, 1);
+      renderRecurring();
+    } catch (e) { alert("Failed: " + e.message); }
+  }));
+}
+
+function openRecurringModal(idx) {
+  const r = idx != null ? recurring[idx] : null;
+  document.getElementById("recurringModalTitle").textContent = r ? "Edit Recurring Rule" : "New Recurring Rule";
+  document.getElementById("recurringId").value = idx != null ? String(idx) : "";
+  document.getElementById("recType").value = r ? r.type : "expense";
+  document.getElementById("recStartDate").value = r ? r.date : new Date().toISOString().slice(0, 10);
+  document.getElementById("recDesc").value = r ? (r.description || "") : "";
+  document.getElementById("recCategory").value = r ? (r.category || "") : "";
+  document.getElementById("recAmount").value = r ? r.amount : "";
+  document.getElementById("recFrequency").value = r ? r.frequency : "monthly";
+  document.getElementById("recPct").value = r ? (r.deductible_pct ?? 100) : 100;
+  document.getElementById("recClaimable").value = r ? (r.claimable || "Pending") : "Pending";
+  document.getElementById("recEndDate").value = r ? (r.endDate || "") : "";
+  document.getElementById("recNotes").value = r ? (r.notes || "") : "";
+  document.getElementById("deleteRecurringBtn").classList.toggle("hidden", !r);
+  toggleRecurringTypeFields();
+  openModal("recurringModal");
+}
+
+function toggleRecurringTypeFields() {
+  const isIncome = document.getElementById("recType").value === "income";
+  document.getElementById("recExpenseFields").style.display = isIncome ? "none" : "grid";
+}
+
+document.getElementById("recType").addEventListener("change", toggleRecurringTypeFields);
+
+document.getElementById("saveRecurringBtn").addEventListener("click", async () => {
+  const idxStr = document.getElementById("recurringId").value;
+  const type = document.getElementById("recType").value;
+  const rule = {
+    type,
+    date: document.getElementById("recStartDate").value,
+    description: document.getElementById("recDesc").value.trim(),
+    category: document.getElementById("recCategory").value.trim() || "Other",
+    amount: parseFloat(document.getElementById("recAmount").value) || 0,
+    frequency: document.getElementById("recFrequency").value,
+    deductible_pct: type === "income" ? 0 : (parseFloat(document.getElementById("recPct").value) || 0),
+    claimable: type === "income" ? null : document.getElementById("recClaimable").value,
+    endDate: document.getElementById("recEndDate").value || null,
+    notes: document.getElementById("recNotes").value.trim(),
+    active: true,
+    lastRun: null
+  };
+  if (!rule.date || !rule.amount) { alert("Start date and amount are required."); return; }
+
+  try {
+    if (idxStr !== "") {
+      const i = parseInt(idxStr, 10);
+      const existing = recurring[i];
+      rule.lastRun = existing.lastRun;
+      rule.active = existing.active;
+      await updateRecurringRule(existing.id, rule);
+      recurring[i] = { ...rule, id: existing.id };
+    } else {
+      const created = await createRecurringRule(rule);
+      recurring.push(created);
+    }
+    await processRecurring();
+    renderRecurring();
+    renderLedger();
+    renderDashboard();
+    closeModal("recurringModal");
+    toast("Recurring rule saved.");
+  } catch (e) { alert("Failed to save: " + e.message); }
+});
+
+document.getElementById("deleteRecurringBtn").addEventListener("click", async () => {
+  const idxStr = document.getElementById("recurringId").value;
+  if (idxStr === "") return;
+  if (!confirm("Delete this recurring rule?")) return;
+  try {
+    const i = parseInt(idxStr, 10);
+    await deleteRecurringRule(recurring[i].id);
+    recurring.splice(i, 1);
+    renderRecurring();
+    closeModal("recurringModal");
+  } catch (e) { alert("Failed to delete: " + e.message); }
+});
+
+function toast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "toast";
+    t.className = "fixed bottom-6 right-6 bg-inverse-surface text-inverse-on-surface px-4 py-2 rounded-lg shadow-lg font-body-sm z-[100] transition-opacity";
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = "1";
+  clearTimeout(t._h);
+  t._h = setTimeout(() => { t.style.opacity = "0"; }, 2000);
+}
+
+function updateApiStatus() {
+  const has = !!(profile && profile.api_key);
+  const btn = document.getElementById("apiStatus");
+  const text = document.getElementById("apiStatusText");
+  if (has) {
+    btn.className = "flex items-center gap-1 px-2 md:px-3 py-1 rounded-full text-label-md font-label-md cursor-pointer transition-colors bg-on-tertiary-container/10 text-on-tertiary-container";
+    text.textContent = "API connected";
+  } else {
+    btn.className = "flex items-center gap-1 px-2 md:px-3 py-1 rounded-full text-label-md font-label-md cursor-pointer transition-colors bg-error-container text-on-error-container";
+    text.textContent = "API Key needed";
+  }
+}
+
+// ============================================================================
+// DASHBOARD
+// ============================================================================
+function renderDashboard() {
+  const expenses = ledger.filter(e => e.type === "expense");
+  const incomes = ledger.filter(e => e.type === "income");
+  const totalIncome = incomes.reduce((s, e) => s + e.amount, 0);
+  const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalDeductible = expenses.reduce((s, e) => s + e.amount * (e.deductible_pct || 0) / 100, 0);
+  const totalClaimable = expenses.filter(e => e.claimable === "Claimed")
+    .reduce((s, e) => s + e.amount * (e.deductible_pct || 0) / 100, 0);
+
+  document.getElementById("kpiIncome").textContent = fmt(totalIncome);
+  document.getElementById("kpiSpend").textContent = fmt(totalSpend);
+  document.getElementById("kpiDeductible").textContent = fmt(totalDeductible);
+  document.getElementById("kpiClaimable").textContent = fmt(totalClaimable);
+
+  renderChart();
+}
+
+function renderChart() {
+  const ctx = document.getElementById("trendChart");
+  const empty = document.getElementById("chartEmpty");
+  if (!ctx) return;
+
+  if (ledger.length === 0) {
+    empty.classList.remove("hidden");
+    if (trendChart) { trendChart.destroy(); trendChart = null; }
+    return;
+  }
+  empty.classList.add("hidden");
+
+  // Bucket by YYYY-MM
+  const buckets = {};
+  ledger.forEach(e => {
+    const ym = (e.date || "").slice(0, 7);
+    if (!ym) return;
+    if (!buckets[ym]) buckets[ym] = { income: 0, expense: 0 };
+    if (e.type === "income") buckets[ym].income += e.amount;
+    else buckets[ym].expense += e.amount;
+  });
+  const months = Object.keys(buckets).sort();
+  const labels = months.map(m => {
+    const d = new Date(m + "-01");
+    return d.toLocaleDateString("en-NZ", { month: "short", year: "2-digit" });
+  });
+  const incomeData = months.map(m => buckets[m].income);
+  const expenseData = months.map(m => buckets[m].expense);
+
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Income", data: incomeData, borderColor: "#009668", backgroundColor: "rgba(0,150,104,0.1)", tension: 0.3, fill: true, borderWidth: 2, pointRadius: 4, pointBackgroundColor: "#009668" },
+        { label: "Expenses", data: expenseData, borderColor: "#131b2e", backgroundColor: "rgba(19,27,46,0.08)", tension: 0.3, fill: true, borderWidth: 2, pointRadius: 4, pointBackgroundColor: "#131b2e" }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.dataset.label + ": " + fmt(c.parsed.y) } } },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: (v) => "$" + v.toLocaleString() }, grid: { color: "#eceef0" } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ============================================================================
+// LEDGER
+// ============================================================================
+const statusStyles = {
+  Claimed: "bg-on-tertiary-container/10 text-on-tertiary-container",
+  Pending: "bg-on-secondary-container/10 text-on-secondary-container",
+  Flagged: "bg-error-container text-on-error-container"
+};
+const statusDot = { Claimed: "bg-on-tertiary-container", Pending: "bg-on-secondary-container", Flagged: "bg-error" };
+
+function getFilteredLedger() {
+  const type = document.getElementById("filterType").value;
+  const cat = document.getElementById("filterCategory").value;
+  const claim = document.getElementById("filterClaimable").value;
+  const min = parseFloat(document.getElementById("filterMin").value) || 0;
+  return ledger.filter(e => {
+    if (type !== "all" && e.type !== type) return false;
+    if (cat !== "all" && e.category !== cat) return false;
+    if (claim !== "all" && e.claimable !== claim) return false;
+    if (e.amount < min) return false;
+    return true;
+  });
+}
+
+function refreshCategoryFilter() {
+  const sel = document.getElementById("filterCategory");
+  const current = sel.value;
+  const cats = [...new Set(ledger.map(e => e.category).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="all">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join("");
+  if (cats.includes(current)) sel.value = current;
+}
+
+function renderLedger() {
+  document.getElementById("recurringCount").textContent = recurring.length;
+  refreshCategoryFilter();
+  const rows = getFilteredLedger().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const tbody = document.getElementById("ledgerRows");
+  const empty = document.getElementById("ledgerEmpty");
+
+  if (rows.length === 0) {
+    tbody.innerHTML = "";
+    empty.style.display = "block";
+  } else {
+    empty.style.display = "none";
+    tbody.innerHTML = rows.map(r => {
+      const isIncome = r.type === "income";
+      const typeBadge = isIncome
+        ? `<span class="bg-on-tertiary-container/15 text-on-tertiary-container text-[10px] px-2 py-0.5 rounded uppercase font-bold">Income</span>`
+        : `<span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded uppercase font-bold">Expense</span>`;
+      const deductAmt = isIncome ? "—" : fmt(r.amount * (r.deductible_pct || 0) / 100);
+      const claimable = isIncome ? "—" : `<span class="${statusStyles[r.claimable] || ""} text-[11px] px-2 py-1 rounded-full font-bold inline-flex items-center gap-1"><span class="w-1.5 h-1.5 ${statusDot[r.claimable] || ""} rounded-full"></span>${r.claimable || ""}</span>`;
+      const pct = isIncome ? "—" : (r.deductible_pct + "%");
+      return `
+        <tr class="hover:bg-surface-container-low transition-colors cursor-pointer" data-id="${r.id}">
+          <td class="p-stack-md font-body-sm">${r.date || ""}</td>
+          <td class="p-stack-md">${typeBadge}</td>
+          <td class="p-stack-md font-body-sm">${r.category || ""}</td>
+          <td class="p-stack-md font-body-sm">${r.description || ""}</td>
+          <td class="p-stack-md font-data-mono text-right ${isIncome ? "text-on-tertiary-container" : ""}">${fmt(r.amount)}</td>
+          <td class="p-stack-md font-data-mono text-right">${pct}</td>
+          <td class="p-stack-md font-data-mono text-right text-on-tertiary-container font-semibold">${deductAmt}</td>
+          <td class="p-stack-md text-center">${claimable}</td>
+          <td class="p-stack-md font-body-sm text-outline italic">${r.notes || ""}</td>
+          <td class="p-stack-md"><button class="edit-btn p-1 hover:bg-surface-container-high rounded" title="Edit"><span class="material-symbols-outlined text-[18px]">edit</span></button></td>
+        </tr>
+      `;
+    }).join("");
+    tbody.querySelectorAll("tr").forEach(tr => {
+      tr.addEventListener("click", () => openEntryModal(tr.dataset.id));
+    });
+  }
+
+  // Footer totals (filtered, expense only)
+  const exp = rows.filter(r => r.type === "expense");
+  const totalAmt = exp.reduce((s, r) => s + r.amount, 0);
+  const totalDeduct = exp.reduce((s, r) => s + r.amount * (r.deductible_pct || 0) / 100, 0);
+  document.getElementById("footAmount").textContent = fmt(totalAmt);
+  document.getElementById("footDeduct").textContent = fmt(totalDeduct);
+}
+
+["filterType", "filterCategory", "filterClaimable", "filterMin"].forEach(id => {
+  document.getElementById(id).addEventListener("change", renderLedger);
+  document.getElementById(id).addEventListener("input", renderLedger);
+});
+document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+  document.getElementById("filterType").value = "all";
+  document.getElementById("filterCategory").value = "all";
+  document.getElementById("filterClaimable").value = "all";
+  document.getElementById("filterMin").value = "";
+  renderLedger();
+});
+
+// ============================================================================
+// ENTRY MODAL
+// ============================================================================
+function openEntryModal(id) {
+  const e = id != null ? ledger.find(x => x.id == id) : null;
+  document.getElementById("entryModalTitle").textContent = e ? "Edit Entry" : "New Entry";
+  document.getElementById("entryId").value = e ? e.id : "";
+  document.getElementById("entryType").value = e ? e.type : "expense";
+  document.getElementById("entryDate").value = e ? e.date : new Date().toISOString().slice(0, 10);
+  document.getElementById("entryCategory").value = e ? (e.category || "") : "";
+  document.getElementById("entryDesc").value = e ? (e.description || "") : "";
+  document.getElementById("entryAmount").value = e ? e.amount : "";
+  document.getElementById("entryPct").value = e ? (e.deductible_pct ?? 100) : 100;
+  document.getElementById("entryClaimable").value = e ? (e.claimable || "Pending") : "Pending";
+  document.getElementById("entryNotes").value = e ? (e.notes || "") : "";
+  document.getElementById("entryRecurring").checked = false;
+  document.getElementById("entryFrequency").value = "monthly";
+  document.getElementById("entryEndDate").value = "";
+  document.getElementById("entryRecurringFields").classList.add("hidden");
+  document.getElementById("deleteEntryBtn").classList.toggle("hidden", !e);
+  toggleEntryTypeFields();
+  openModal("entryModal");
+}
+
+document.getElementById("entryRecurring").addEventListener("change", (e) => {
+  document.getElementById("entryRecurringFields").classList.toggle("hidden", !e.target.checked);
+});
+
+function toggleEntryTypeFields() {
+  const isIncome = document.getElementById("entryType").value === "income";
+  document.getElementById("entryPctWrap").style.display = isIncome ? "none" : "";
+  document.getElementById("entryClaimableWrap").style.display = isIncome ? "none" : "";
+}
+document.getElementById("entryType").addEventListener("change", toggleEntryTypeFields);
+
+document.getElementById("newEntryBtn").addEventListener("click", () => openEntryModal(null));
+document.getElementById("manageRecurringBtn").addEventListener("click", () => setView("recurring"));
+document.getElementById("backToLedgerBtn").addEventListener("click", () => setView("ledger"));
+
+document.getElementById("saveEntryBtn").addEventListener("click", async () => {
+  const id = document.getElementById("entryId").value;
+  const type = document.getElementById("entryType").value;
+  const isRecurring = document.getElementById("entryRecurring").checked && !id;
+  const entry = {
+    type,
+    date: document.getElementById("entryDate").value,
+    category: document.getElementById("entryCategory").value.trim(),
+    description: document.getElementById("entryDesc").value.trim(),
+    amount: parseFloat(document.getElementById("entryAmount").value) || 0,
+    deductible_pct: type === "expense" ? (parseFloat(document.getElementById("entryPct").value) || 0) : 0,
+    claimable: type === "expense" ? document.getElementById("entryClaimable").value : null,
+    notes: document.getElementById("entryNotes").value.trim()
+  };
+
+  try {
+    if (isRecurring) {
+      const rule = {
+        type,
+        date: entry.date,
+        description: entry.description,
+        category: entry.category || "Other",
+        amount: entry.amount,
+        frequency: document.getElementById("entryFrequency").value,
+        deductible_pct: entry.deductible_pct,
+        claimable: entry.claimable,
+        endDate: document.getElementById("entryEndDate").value || null,
+        notes: entry.notes,
+        active: true,
+        lastRun: null
+      };
+      const created = await createRecurringRule(rule);
+      recurring.push(created);
+      await processRecurring();
+    } else {
+      if (id) {
+        await updateLedgerEntry(id, entry);
+        const idx = ledger.findIndex(x => x.id === id);
+        if (idx >= 0) ledger[idx] = { id, ...entry };
+      } else {
+        const created = await createLedgerEntry(entry);
+        ledger.unshift(created);
+      }
+    }
+    renderLedger();
+    renderDashboard();
+    renderRecurring();
+    closeModal("entryModal");
+  } catch (e) { alert("Failed to save: " + e.message); }
+});
+
+document.getElementById("deleteEntryBtn").addEventListener("click", async () => {
+  const id = document.getElementById("entryId").value;
+  if (!id) return;
+  if (!confirm("Delete this entry?")) return;
+  try {
+    await deleteLedgerEntry(id);
+    ledger = ledger.filter(x => x.id !== id);
+    renderLedger();
+    renderDashboard();
+    closeModal("entryModal");
+  } catch (e) { alert("Failed to delete: " + e.message); }
+});
+
+// ============================================================================
+// EXPORT CSV
+// ============================================================================
+document.getElementById("exportBtn").addEventListener("click", () => {
+  if (ledger.length === 0) { alert("No entries to export."); return; }
+  const headers = ["Date", "Type", "Category", "Description", "Amount NZD", "Deductible %", "Deductible Amount NZD", "Claimable", "Notes"];
+  const rows = ledger.map(r => [
+    r.date, r.type, r.category, r.description, r.amount.toFixed(2),
+    r.type === "expense" ? r.deductible_pct : "",
+    r.type === "expense" ? (r.amount * r.deductible_pct / 100).toFixed(2) : "",
+    r.claimable || "", r.notes || ""
+  ]);
+  const csv = [headers, ...rows].map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `taxprecision-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ============================================================================
+// CHAT
+// ============================================================================
+const SYSTEM_PROMPT = `You are TaxPrecision AI, an assistant for a personal tax-tracking app used by a New Zealand-based user.
+
+You help log expenses, income, and business trips. When the user describes a transaction (or sends a receipt/invoice as a photo or PDF), respond by emitting a JSON code block describing the action(s) to log, followed by a brief friendly confirmation.
+
+Output format — STRICT. Reply with a fenced JSON code block first, then optional plain-text confirmation:
+
+\`\`\`json
+{
+  "actions": [
+    {
+      "type": "expense",
+      "date": "YYYY-MM-DD",
+      "category": "Software" | "Travel" | "Utility" | "Hardware" | "Dining" | "Office" | "Marketing" | "Consulting" | "Income" | "Other",
+      "description": "short description",
+      "amount": 123.45,
+      "deductible_pct": 100,
+      "claimable": "Pending",
+      "notes": "context, addresses, distance, etc."
+    }
+  ],
+  "reply": "Done — logged $X.XX under Category."
+}
+\`\`\`
+
+Rules:
+- "type" is "expense" or "income".
+- Currency is NZD.
+- For trips: category="Travel", deductible_pct=100, claimable="Pending". Estimate one-way driving distance in km from the addresses. Compute amount = distance_km × {{MILEAGE_RATE}}. Put the route, estimated km, and rate in "notes".
+- For receipt/invoice attachments (photo or PDF): extract merchant→description, total→amount, date. Pick the best category. Default deductible_pct=100 unless clearly mixed-use (meals=50, home utilities=15).
+- For income: deductible_pct can be 0, claimable can be null.
+- If the user is just asking a question (no transaction to log), set "actions" to an empty array [] and put your answer in "reply".
+- Always include the JSON block, even for plain questions. Make "reply" conversational, max 2 sentences.
+- Today's date is {{TODAY}}. If the user says "today", use today's date.
+
+If the user is setting up a RECURRING expense or income (says words like "recurring", "every month", "monthly subscription", "quarterly", "every 4 weeks", "yearly subscription"), use the "recurring" array instead of (or in addition to) "actions":
+
+\`\`\`json
+{
+  "actions": [],
+  "recurring": [
+    {
+      "type": "expense",
+      "date": "YYYY-MM-DD",
+      "description": "Adobe Creative Cloud",
+      "category": "Software",
+      "amount": 89.99,
+      "frequency": "every4weeks" | "monthly" | "quarterly" | "yearly",
+      "deductible_pct": 100,
+      "claimable": "Pending",
+      "endDate": null,
+      "notes": ""
+    }
+  ],
+  "reply": "Set up — I'll log Adobe Creative Cloud at $89.99 every month starting today."
+}
+\`\`\`
+
+Frequency MUST be exactly one of these four values: "every4weeks", "monthly", "quarterly", "yearly". Map user phrases like "weekly" or "fortnightly" to the closest option (or ask for clarification). The app will automatically generate the first ledger entry and all due entries up to today.
+
+Do not include any text before the JSON block. After the block you may add a short note but it's optional.`;
+
+function buildSystemPrompt() {
+  const rate = parseFloat(profile.mileage_rate || "1.04");
+  const today = new Date().toISOString().slice(0, 10);
+  return SYSTEM_PROMPT.replace("{{MILEAGE_RATE}}", rate.toString()).replace("{{TODAY}}", today);
+}
+
+function renderChat() {
+  const log = document.getElementById("chatLog");
+  // Keep the welcome bubble (first 2 children: date divider + greeting)
+  const welcome = log.children[0];
+  const greeting = log.children[1];
+  log.innerHTML = "";
+  log.appendChild(welcome);
+  log.appendChild(greeting);
+  chatHistory.forEach(m => appendBubble(m));
+  log.scrollTop = log.scrollHeight;
+}
+
+function appendBubble(msg, opts = {}) {
+  const log = document.getElementById("chatLog");
+  const wrap = document.createElement("div");
+  const time = msg.time || new Date().toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" });
+
+  if (msg.role === "user") {
+    wrap.className = "flex justify-end";
+    let imgHtml = "";
+    if (msg.image) {
+      imgHtml = `<div class="rounded-lg overflow-hidden border border-on-primary-fixed-variant/20 mb-2"><img class="w-full max-w-sm h-auto object-cover" src="${msg.image}"/></div>`;
+    } else if (msg.isPdf) {
+      imgHtml = `<div class="flex items-center gap-2 bg-white/10 rounded-lg p-2 mb-2"><span class="material-symbols-outlined text-white">picture_as_pdf</span><span class="font-body-sm text-white truncate">${escapeHtml(msg.fileName || "invoice.pdf")}</span></div>`;
+    }
+    const hasAttachment = !!(msg.image || msg.isPdf);
+    const textHtml = msg.text ? `<div class="p-2"><p class="font-body-md text-body-md text-white">${escapeHtml(msg.text)}</p></div>` : "";
+    wrap.innerHTML = `
+      <div class="max-w-[60%] flex flex-col items-end gap-stack-sm">
+        <div class="bg-primary-container text-on-primary-fixed-variant ${hasAttachment ? "p-2" : "p-stack-lg"} rounded-xl rounded-tr-none border border-primary-container shadow-sm">
+          ${imgHtml}${textHtml || (hasAttachment ? "" : `<p class="font-body-md text-body-md text-white">${escapeHtml(msg.text || "")}</p>`)}
+        </div>
+        <span class="font-label-md text-label-md text-outline">${time}</span>
+      </div>
+    `;
+  } else {
+    wrap.className = "flex justify-start";
+    let body = "";
+    if (msg.typing) {
+      body = `<div class="flex gap-1 items-center"><span class="typing-dot w-2 h-2 bg-on-surface-variant rounded-full"></span><span class="typing-dot w-2 h-2 bg-on-surface-variant rounded-full"></span><span class="typing-dot w-2 h-2 bg-on-surface-variant rounded-full"></span></div>`;
+    } else {
+      body = `<p class="font-body-md text-body-md text-on-surface">${escapeHtml(msg.text || "")}</p>`;
+      if (msg.actions && msg.actions.length) {
+        body += `<div class="mt-stack-md flex flex-wrap gap-stack-sm">`;
+        msg.actions.forEach(a => {
+          body += `<span class="inline-flex items-center gap-1 px-3 py-1 bg-tertiary-container text-on-tertiary-container rounded-full font-label-md text-label-md">
+            <span class="material-symbols-outlined text-[14px]">check_circle</span> Logged: ${escapeHtml(a.description || a.category)} · ${fmt(a.amount)}
+          </span>`;
+        });
+        body += `</div>`;
+      }
+      if (msg.recurring && msg.recurring.length) {
+        body += `<div class="mt-stack-md flex flex-wrap gap-stack-sm">`;
+        msg.recurring.forEach(r => {
+          body += `<span class="inline-flex items-center gap-1 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-md text-label-md">
+            <span class="material-symbols-outlined text-[14px]">autorenew</span> Recurring: ${escapeHtml(r.description)} · ${fmt(r.amount)} · ${escapeHtml(frequencyLabel(r.frequency))}
+          </span>`;
+        });
+        body += `</div>`;
+      }
+    }
+    wrap.innerHTML = `
+      <div class="max-w-[80%] flex gap-stack-md">
+        <div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary">smart_toy</span>
+        </div>
+        <div class="flex flex-col gap-stack-sm">
+          <div class="bg-surface-container-lowest border border-outline-variant p-stack-lg rounded-xl rounded-tl-none shadow-sm">${body}</div>
+          <span class="font-label-md text-label-md text-outline">${time}</span>
+        </div>
+      </div>
+    `;
+  }
+  if (opts.id) wrap.id = opts.id;
+  log.appendChild(wrap);
+  log.scrollTop = log.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// File attach
+document.getElementById("attachBtn").addEventListener("click", () => document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const att = document.getElementById("pendingAttachment");
+  const status = document.getElementById("pendingStatus");
+  const previewImg = document.getElementById("pendingPreview");
+  const previewPdf = document.getElementById("pendingPdfIcon");
+  att.classList.remove("hidden");
+  att.classList.add("flex");
+  status.textContent = "Reading file...";
+  status.className = "font-body-sm text-on-surface-variant";
+  try {
+    pendingImage = await processAttachmentFile(file);
+    if (pendingImage.isPdf) {
+      previewImg.classList.add("hidden");
+      previewPdf.classList.remove("hidden");
+      previewPdf.classList.add("flex");
+    } else {
+      previewPdf.classList.add("hidden");
+      previewPdf.classList.remove("flex");
+      previewImg.classList.remove("hidden");
+      previewImg.src = pendingImage.dataUrl;
+    }
+    status.textContent = (pendingImage.isPdf ? pendingImage.name + " · " : "") + "Ready · tap Send";
+    status.className = "font-body-sm text-on-tertiary-container font-semibold";
+  } catch (err) {
+    console.error("File read failed", err);
+    status.textContent = "Couldn't read file — try another";
+    status.className = "font-body-sm text-error font-semibold";
+    pendingImage = null;
+  }
+});
+document.getElementById("clearAttachment").addEventListener("click", () => {
+  pendingImage = null;
+  document.getElementById("fileInput").value = "";
+  const el = document.getElementById("pendingAttachment");
+  el.classList.add("hidden"); el.classList.remove("flex");
+  document.getElementById("pendingPreview").classList.add("hidden");
+  document.getElementById("pendingPdfIcon").classList.add("hidden");
+  document.getElementById("pendingPdfIcon").classList.remove("flex");
+});
+
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// Accepts a receipt/invoice as either an image or a PDF.
+// Images: re-encoded to JPEG via canvas (handles HEIC from iPhone, strips EXIF,
+// downscales to Claude's recommended 1568px max edge).
+// PDFs: sent through as-is (base64), Claude reads PDFs natively.
+async function processAttachmentFile(file) {
+  if (file.type === "application/pdf") {
+    if (file.size > 32 * 1024 * 1024) throw new Error("PDF is too large (32MB max).");
+    const dataUrl = await fileToDataUrl(file);
+    return { dataUrl, mediaType: "application/pdf", base64: dataUrl.split(",")[1], isPdf: true, name: file.name };
+  }
+  const dataUrl = await fileToDataUrl(file);
+  const img = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = () => rej(new Error("Browser can't decode this image format."));
+    i.src = dataUrl;
+  });
+  const maxEdge = 1568;
+  let w = img.naturalWidth || img.width;
+  let h = img.naturalHeight || img.height;
+  if (!w || !h) throw new Error("Image has no dimensions.");
+  if (w > maxEdge || h > maxEdge) {
+    const scale = maxEdge / Math.max(w, h);
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, w, h);
+  const jpegDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+  return { dataUrl: jpegDataUrl, mediaType: "image/jpeg", base64: jpegDataUrl.split(",")[1], isPdf: false };
+}
+
+// Send
+const chatInput = document.getElementById("chatInput");
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+chatInput.addEventListener("input", () => {
+  chatInput.style.height = "auto";
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + "px";
+});
+document.getElementById("sendBtn").addEventListener("click", sendMessage);
+
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  const image = pendingImage;
+  if (!text && !image) return;
+
+  const apiKey = profile.api_key;
+  if (!apiKey) {
+    appendBubble({ role: "user", text: text || (image && image.isPdf ? "[" + image.name + "]" : "[image]"), image: image && !image.isPdf ? image.dataUrl : null, isPdf: image ? image.isPdf : false, fileName: image ? image.name : null });
+    appendBubble({ role: "assistant", text: "I need a Claude API key to read messages. Open Settings and paste your sk-ant-... key under Claude API." });
+    return;
+  }
+
+  const userMsg = {
+    role: "user", text,
+    image: image && !image.isPdf ? image.dataUrl : null,
+    isPdf: image ? image.isPdf : false,
+    fileName: image ? image.name : null,
+    time: new Date().toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })
+  };
+  try {
+    chatHistory.push({
+      role: "user", text,
+      image: image && !image.isPdf ? image.dataUrl : null,
+      base64: image ? image.base64 : null, mediaType: image ? image.mediaType : null,
+      isPdf: image ? image.isPdf : false, fileName: image ? image.name : null,
+      time: userMsg.time
+    });
+    saveChat();
+  } catch (e) {
+    console.error("saveChat failed", e);
+  }
+  appendBubble(userMsg);
+
+  chatInput.value = "";
+  chatInput.style.height = "auto";
+  pendingImage = null;
+  document.getElementById("fileInput").value = "";
+  const att = document.getElementById("pendingAttachment");
+  att.classList.add("hidden"); att.classList.remove("flex");
+  document.getElementById("pendingPreview").classList.add("hidden");
+  document.getElementById("pendingPdfIcon").classList.add("hidden");
+  document.getElementById("pendingPdfIcon").classList.remove("flex");
+
+  const typingId = "typing-" + Date.now();
+  appendBubble({ role: "assistant", typing: true }, { id: typingId });
+
+  try {
+    const reply = await callClaude(apiKey);
+    document.getElementById(typingId)?.remove();
+    const parsed = parseClaudeReply(reply);
+    if (parsed.actions && parsed.actions.length) {
+      for (const a of parsed.actions) {
+        const entry = {
+          type: a.type || "expense",
+          date: a.date || new Date().toISOString().slice(0, 10),
+          category: a.category || "Other",
+          description: a.description || "",
+          amount: parseFloat(a.amount) || 0,
+          deductible_pct: a.type === "income" ? 0 : (a.deductible_pct ?? 100),
+          claimable: a.type === "income" ? null : (a.claimable || "Pending"),
+          notes: a.notes || ""
+        };
+        try {
+          const created = await createLedgerEntry(entry);
+          ledger.unshift(created);
+        } catch (e) { console.error("create from chat", e); }
+      }
+    }
+    let recurringSummary = [];
+    if (parsed.recurring && parsed.recurring.length) {
+      for (const r of parsed.recurring) {
+        const rule = {
+          type: r.type || "expense",
+          date: r.date || new Date().toISOString().slice(0, 10),
+          description: r.description || "",
+          category: r.category || "Other",
+          amount: parseFloat(r.amount) || 0,
+          frequency: r.frequency || "monthly",
+          deductible_pct: r.type === "income" ? 0 : (r.deductible_pct ?? 100),
+          claimable: r.type === "income" ? null : (r.claimable || "Pending"),
+          endDate: r.endDate || null,
+          notes: r.notes || "",
+          active: true,
+          lastRun: null
+        };
+        try {
+          const created = await createRecurringRule(rule);
+          recurring.push(created);
+          recurringSummary.push(created);
+        } catch (e) { console.error("create recurring from chat", e); }
+      }
+      await processRecurring();
+    }
+    renderLedger();
+    renderDashboard();
+    renderRecurring();
+    const assistantMsg = { role: "assistant", text: parsed.reply || "Done.", actions: parsed.actions || [], recurring: recurringSummary, time: new Date().toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" }) };
+    chatHistory.push(assistantMsg);
+    saveChat();
+    appendBubble(assistantMsg);
+  } catch (err) {
+    document.getElementById(typingId)?.remove();
+    appendBubble({ role: "assistant", text: "Error: " + err.message });
+    console.error(err);
+  }
+}
+
+async function callClaude(apiKey) {
+  // Build message array from history (last 20 messages to keep context tight)
+  const recent = chatHistory.slice(-20);
+  const messages = recent.map(m => {
+    if (m.role === "user") {
+      const content = [];
+      if (m.base64 && m.mediaType === "application/pdf") {
+        content.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: m.base64 } });
+      } else if (m.base64 && m.mediaType) {
+        content.push({ type: "image", source: { type: "base64", media_type: m.mediaType, data: m.base64 } });
+      }
+      if (m.text) content.push({ type: "text", text: m.text });
+      if (content.length === 0) content.push({ type: "text", text: "(empty)" });
+      return { role: "user", content };
+    }
+    return { role: "assistant", content: m.text || "" };
+  });
+
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-5",
+      max_tokens: 2048,
+      system: buildSystemPrompt(),
+      messages
+    })
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    throw new Error("API " + resp.status + ": " + errText.slice(0, 300));
+  }
+  const data = await resp.json();
+  return data.content?.[0]?.text || "";
+}
+
+function parseClaudeReply(text) {
+  // Find a ```json ... ``` block
+  const m = text.match(/```json\s*([\s\S]*?)\s*```/);
+  if (m) {
+    try {
+      const obj = JSON.parse(m[1]);
+      return { actions: obj.actions || [], recurring: obj.recurring || [], reply: obj.reply || "" };
+    } catch (e) { /* fall through */ }
+  }
+  // Try parsing the whole thing
+  try {
+    const obj = JSON.parse(text);
+    return { actions: obj.actions || [], recurring: obj.recurring || [], reply: obj.reply || "" };
+  } catch (e) {
+    return { actions: [], recurring: [], reply: text };
+  }
+}
+
+function closeExpensePanel() { /* no-op now, kept for compatibility */ }
+
+// ============================================================================
+// AUTH FLOW
+// ============================================================================
+const authEmailInput = document.getElementById("authEmail");
+const authSendBtn = document.getElementById("authSendBtn");
+const authBackBtn = document.getElementById("authBackBtn");
+const authError = document.getElementById("authError");
+
+authSendBtn.addEventListener("click", async () => {
+  const email = authEmailInput.value.trim();
+  if (!isValidEmail(email)) { showAuthError("Please enter a valid email."); return; }
+  authError.classList.add("hidden");
+  authSendBtn.disabled = true;
+  authSendBtn.textContent = "Sending...";
+  try {
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + window.location.pathname }
+    });
+    if (error) throw error;
+    document.getElementById("authStep1").classList.add("hidden");
+    document.getElementById("authEmailEcho").textContent = email;
+    document.getElementById("authStep2").classList.remove("hidden");
+  } catch (e) {
+    showAuthError(e.message || "Failed to send link.");
+  } finally {
+    authSendBtn.disabled = false;
+    authSendBtn.innerHTML = '<span class="material-symbols-outlined text-base">mail</span> Send Magic Link';
+  }
+});
+authEmailInput.addEventListener("keydown", (e) => { if (e.key === "Enter") authSendBtn.click(); });
+authBackBtn.addEventListener("click", () => {
+  document.getElementById("authStep2").classList.add("hidden");
+  document.getElementById("authStep1").classList.remove("hidden");
+});
+
+function showAuthError(msg) { authError.textContent = msg; authError.classList.remove("hidden"); }
+
+function showAuthLoading() {
+  document.getElementById("authStep1").classList.add("hidden");
+  document.getElementById("authStep2").classList.add("hidden");
+  document.getElementById("authLoading").classList.remove("hidden");
+}
+
+// ============================================================================
+// REAL-TIME SUBSCRIPTIONS
+// ============================================================================
+function subscribeRealtime() {
+  if (realtimeChannel) sb.removeChannel(realtimeChannel);
+  realtimeChannel = sb.channel("tp-" + currentUser.id)
+    .on("postgres_changes", { event: "*", schema: "public", table: "ledger_entries", filter: "user_id=eq." + currentUser.id }, (payload) => {
+      if (payload.eventType === "INSERT") {
+        const row = ledgerFromDB(payload.new);
+        if (!ledger.find(x => x.id === row.id)) ledger.unshift(row);
+      } else if (payload.eventType === "UPDATE") {
+        const row = ledgerFromDB(payload.new);
+        const i = ledger.findIndex(x => x.id === row.id);
+        if (i >= 0) ledger[i] = row;
+      } else if (payload.eventType === "DELETE") {
+        ledger = ledger.filter(x => x.id !== payload.old.id);
+      }
+      renderLedger(); renderDashboard();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "recurring_rules", filter: "user_id=eq." + currentUser.id }, (payload) => {
+      if (payload.eventType === "INSERT") {
+        const row = recurringFromDB(payload.new);
+        if (!recurring.find(x => x.id === row.id)) recurring.push(row);
+      } else if (payload.eventType === "UPDATE") {
+        const row = recurringFromDB(payload.new);
+        const i = recurring.findIndex(x => x.id === row.id);
+        if (i >= 0) recurring[i] = row;
+      } else if (payload.eventType === "DELETE") {
+        recurring = recurring.filter(x => x.id !== payload.old.id);
+      }
+      renderRecurring();
+    })
+    .subscribe();
+}
+
+// ============================================================================
+// BOOT
+// ============================================================================
+async function onSignedIn(user) {
+  currentUser = user;
+  showAuthLoading();
+  try {
+    await loadAll();
+    const generated = await processRecurring();
+    if (generated > 0) {
+      setTimeout(() => toast(`${generated} recurring ${generated === 1 ? "entry" : "entries"} auto-logged.`), 800);
+    }
+    document.body.classList.add("signed-in");
+    updateApiStatus();
+    renderChat();
+    renderDashboard();
+    renderLedger();
+    renderRecurring();
+    setView("dashboard");
+    subscribeRealtime();
+    initGmailFromCache();
+  } catch (e) {
+    console.error("Sign-in load failed", e);
+    showAuthError("Loaded sign-in but couldn't load your data: " + e.message);
+    document.getElementById("authLoading").classList.add("hidden");
+    document.getElementById("authStep1").classList.remove("hidden");
+  }
+}
+
+function onSignedOut() {
+  currentUser = null;
+  profile = {};
+  ledger = []; recurring = []; users = [];
+  if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+  gmailAccessToken = null;
+  gmailTokenExpiresAt = 0;
+  sessionStorage.removeItem("tp_gmail_token");
+  sessionStorage.removeItem("tp_gmail_token_exp");
+  document.body.classList.remove("signed-in");
+  document.getElementById("authLoading").classList.add("hidden");
+  document.getElementById("authStep2").classList.add("hidden");
+  document.getElementById("authStep1").classList.remove("hidden");
+  authEmailInput.value = "";
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_IN" && session?.user) {
+    if (!currentUser || currentUser.id !== session.user.id) onSignedIn(session.user);
+  } else if (event === "SIGNED_OUT") {
+    onSignedOut();
+  }
+});
+
+// Initial session check
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) onSignedIn(session.user);
+})();
+</script>
+</body>
+</html>
