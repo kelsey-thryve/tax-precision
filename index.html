@@ -1060,6 +1060,8 @@ document.getElementById("connectGmailBtn").addEventListener("click", () => {
 
 document.getElementById("scanGmailBtn").addEventListener("click", () => {
   if (!gmailAccessToken || Date.now() >= gmailTokenExpiresAt) { toast("Reconnect Gmail first."); return; }
+  if (!profile.api_key) { toast("Add your Claude API key above first."); return; }
+  toast("Scanning Gmail...");
   scanGmailForInvoices();
 });
 
@@ -1167,7 +1169,11 @@ async function scanGmailForInvoices() {
         await loadLedger();
         renderLedger(); renderDashboard();
         toast(`${logged} ${logged === 1 ? "entry" : "entries"} logged from Gmail.`);
+      } else {
+        toast("Scan complete — nothing new (already logged).");
       }
+    } else {
+      toast("Scan complete — no invoices found in the last 3 days.");
     }
     gmailLastScanAt = new Date();
     localStorage.setItem("tp_gmail_last_scan", gmailLastScanAt.toISOString());
