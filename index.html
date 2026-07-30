@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TaxPrecision"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="apple-touch-icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="%23131b2e"/><text x="256" y="340" font-size="240" text-anchor="middle" fill="white" font-family="Inter,sans-serif" font-weight="900">TP</text></svg>'/>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="96" fill="%23131b2e"/><text x="256" y="340" font-size="240" text-anchor="middle" fill="white" font-family="Inter,sans-serif" font-weight="900">TP</text></svg>'/>
 <title>TaxPrecision</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -1134,7 +1135,11 @@ async function scanGmailForInvoices() {
     const listResp = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=10`, {
       headers: { Authorization: "Bearer " + gmailAccessToken }
     });
-    if (!listResp.ok) throw new Error("Gmail search failed (" + listResp.status + ")");
+    if (!listResp.ok) {
+      let reason = "";
+      try { reason = (await listResp.json()).error?.message || ""; } catch (e) {}
+      throw new Error("Gmail search failed (" + listResp.status + ")" + (reason ? ": " + reason : ""));
+    }
     const listData = await listResp.json();
     const messages = listData.messages || [];
     const rows = [];
