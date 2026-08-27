@@ -118,25 +118,65 @@
     </div>
     <div id="authStep1">
       <h2 class="font-h3 text-h3 text-primary mb-1">Sign in</h2>
-      <p class="font-body-sm text-on-surface-variant mb-stack-lg">We'll email you a magic link — no password needed.</p>
+      <p class="font-body-sm text-on-surface-variant mb-stack-lg">Sign in with your email and password.</p>
       <div class="space-y-stack-md">
         <div>
           <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Email</label>
           <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-md"/>
         </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Password</label>
+          <input id="authPassword" type="password" autocomplete="current-password" placeholder="••••••••" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-md"/>
+        </div>
         <button id="authSendBtn" class="w-full py-3 bg-primary text-on-primary rounded-lg font-body-md font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
-          <span class="material-symbols-outlined text-base">mail</span> Send Magic Link
+          <span class="material-symbols-outlined text-base">login</span> Sign In
         </button>
+        <div class="text-right">
+          <button id="authForgotLink" type="button" class="font-body-sm text-primary hover:underline">Forgot password?</button>
+        </div>
         <p id="authError" class="hidden text-error font-body-sm"></p>
       </div>
     </div>
-    <div id="authStep2" class="hidden text-center">
+    <div id="authForgot" class="hidden">
+      <h2 class="font-h3 text-h3 text-primary mb-1">Reset password</h2>
+      <p class="font-body-sm text-on-surface-variant mb-stack-lg">We'll email you a link to set a new password.</p>
+      <div class="space-y-stack-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Email</label>
+          <input id="authForgotEmail" type="email" autocomplete="email" placeholder="you@example.com" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-md"/>
+        </div>
+        <button id="authForgotSendBtn" class="w-full py-3 bg-primary text-on-primary rounded-lg font-body-md font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-base">mail</span> Send Reset Link
+        </button>
+        <button id="authForgotBackBtn" type="button" class="w-full text-center text-primary font-body-sm font-semibold hover:underline">Back to sign in</button>
+        <p id="authForgotError" class="hidden text-error font-body-sm"></p>
+      </div>
+    </div>
+    <div id="authForgotSent" class="hidden text-center">
       <div class="w-16 h-16 mx-auto bg-on-tertiary-container/10 rounded-full flex items-center justify-center mb-stack-md">
         <span class="material-symbols-outlined text-on-tertiary-container" style="font-size:32px;">mark_email_read</span>
       </div>
       <h2 class="font-h3 text-h3 text-primary mb-1">Check your email</h2>
-      <p class="font-body-sm text-on-surface-variant">We sent a link to <span id="authEmailEcho" class="font-semibold"></span>. Click it on this device to sign in.</p>
-      <button id="authBackBtn" class="mt-stack-lg text-primary font-body-sm font-semibold hover:underline">Use a different email</button>
+      <p class="font-body-sm text-on-surface-variant">We sent a password reset link to <span id="authForgotEmailEcho" class="font-semibold"></span>.</p>
+      <button id="authForgotSentBackBtn" class="mt-stack-lg text-primary font-body-sm font-semibold hover:underline">Back to sign in</button>
+    </div>
+    <div id="authRecovery" class="hidden">
+      <h2 class="font-h3 text-h3 text-primary mb-1">Set a new password</h2>
+      <p class="font-body-sm text-on-surface-variant mb-stack-lg">Choose a new password for your account.</p>
+      <div class="space-y-stack-md">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">New Password</label>
+          <input id="authNewPassword" type="password" autocomplete="new-password" placeholder="••••••••" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-md"/>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Confirm Password</label>
+          <input id="authNewPassword2" type="password" autocomplete="new-password" placeholder="••••••••" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-md"/>
+        </div>
+        <button id="authSetPasswordBtn" class="w-full py-3 bg-primary text-on-primary rounded-lg font-body-md font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-base">lock_reset</span> Set Password
+        </button>
+        <p id="authRecoveryError" class="hidden text-error font-body-sm"></p>
+      </div>
     </div>
     <div id="authLoading" class="hidden text-center py-stack-lg">
       <div class="flex justify-center gap-1 mb-stack-md">
@@ -226,6 +266,7 @@
             </div>
             <p class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">Total Income</p>
             <h2 id="kpiIncome" class="font-display text-display text-on-tertiary-container">$0.00</h2>
+            <p id="kpiGst" class="text-on-surface-variant font-body-sm mt-1">$0.00 GST collected</p>
           </div>
 
           <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
@@ -326,7 +367,7 @@
         </section>
 
         <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-x-auto shadow-sm">
-          <table class="w-full text-left border-collapse min-w-[800px]">
+          <table class="w-full text-left border-collapse min-w-[900px]">
             <thead class="bg-surface-container-low border-b border-outline-variant">
               <tr>
                 <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Date</th>
@@ -334,6 +375,7 @@
                 <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Category</th>
                 <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Description</th>
                 <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Amount (NZD)</th>
+                <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">GST</th>
                 <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Deductible %</th>
                 <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Deduct. Amount</th>
                 <th class="p-stack-md font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Claimable</th>
@@ -346,6 +388,7 @@
               <tr>
                 <td class="p-stack-md text-right text-on-surface-variant font-label-md" colspan="4">TOTALS</td>
                 <td id="footAmount" class="p-stack-md font-data-mono text-right">$0.00</td>
+                <td id="footGst" class="p-stack-md font-data-mono text-right text-on-tertiary-container">$0.00</td>
                 <td></td>
                 <td id="footDeduct" class="p-stack-md font-data-mono text-right text-primary text-lg">$0.00</td>
                 <td colspan="3"></td>
@@ -625,6 +668,14 @@
           <option value="Flagged">Flagged</option>
         </select>
       </div>
+      <div id="entryGstWrap" class="hidden bg-surface-container-low border border-outline-variant rounded-lg p-stack-md">
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">GST</label>
+        <select id="entryGst" class="w-full border border-outline-variant rounded-lg p-stack-sm">
+          <option value="true">NZ Income — GST Charged (15%)</option>
+          <option value="false">Overseas Income — No GST</option>
+        </select>
+        <p id="entryGstAmount" class="font-body-sm text-on-surface-variant mt-1">GST component: $0.00 (amount is treated as GST-inclusive)</p>
+      </div>
       <div>
         <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">Notes</label>
         <textarea id="entryNotes" class="w-full border border-outline-variant rounded-lg p-stack-sm font-body-sm" rows="2"></textarea>
@@ -722,6 +773,13 @@
           </select>
         </div>
       </div>
+      <div id="recIncomeFields" class="hidden bg-surface-container-low border border-outline-variant rounded-lg p-stack-md">
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">GST</label>
+        <select id="recGst" class="w-full border border-outline-variant rounded-lg p-stack-sm">
+          <option value="true">NZ Income — GST Charged (15%)</option>
+          <option value="false">Overseas Income — No GST</option>
+        </select>
+      </div>
       <div>
         <label class="block font-label-md text-label-md text-on-surface-variant mb-1 uppercase">End Date (optional)</label>
         <input id="recEndDate" type="date" class="w-full border border-outline-variant rounded-lg p-stack-sm font-data-mono"/>
@@ -790,19 +848,25 @@ function saveChat() {
 // ============================================================================
 // DB <-> JS shape mapping
 // ============================================================================
+// NZ GST is 15%, quoted GST-inclusive. GST component of a GST-inclusive amount = amount × 3/23.
+const GST_RATE = 0.15;
+function gstComponent(amount) { return (amount || 0) * GST_RATE / (1 + GST_RATE); }
+
 function ledgerFromDB(row) {
   return {
     id: row.id, type: row.type, date: row.date,
     category: row.category || "", description: row.description || "",
     amount: parseFloat(row.amount), deductible_pct: parseFloat(row.deductible_pct) || 0,
-    claimable: row.claimable, notes: row.notes || ""
+    claimable: row.claimable, notes: row.notes || "",
+    gst_applicable: row.type === "income" ? !!row.gst_applicable : false
   };
 }
 function ledgerToDB(e) {
   return {
     user_id: currentUser.id, type: e.type, date: e.date,
     category: e.category, description: e.description, amount: e.amount,
-    deductible_pct: e.deductible_pct, claimable: e.claimable, notes: e.notes
+    deductible_pct: e.deductible_pct, claimable: e.claimable, notes: e.notes,
+    gst_applicable: e.type === "income" ? !!e.gst_applicable : false
   };
 }
 function recurringFromDB(row) {
@@ -812,7 +876,8 @@ function recurringFromDB(row) {
     amount: parseFloat(row.amount), frequency: row.frequency,
     deductible_pct: parseFloat(row.deductible_pct) || 0,
     claimable: row.claimable, notes: row.notes || "",
-    active: row.active, lastRun: row.last_run
+    active: row.active, lastRun: row.last_run,
+    gst_applicable: row.type === "income" ? !!row.gst_applicable : false
   };
 }
 function recurringToDB(r) {
@@ -820,7 +885,8 @@ function recurringToDB(r) {
     user_id: currentUser.id, type: r.type, start_date: r.date, end_date: r.endDate || null,
     description: r.description, category: r.category, amount: r.amount,
     frequency: r.frequency, deductible_pct: r.deductible_pct, claimable: r.claimable,
-    notes: r.notes, active: r.active, last_run: r.lastRun || null
+    notes: r.notes, active: r.active, last_run: r.lastRun || null,
+    gst_applicable: r.type === "income" ? !!r.gst_applicable : false
   };
 }
 
@@ -1001,7 +1067,7 @@ const GOOGLE_CLIENT_ID = "996388804451-26hdq9ib73h82b738nullfohaaave4kc.apps.goo
 const GMAIL_SCAN_PROMPT = `You are extracting a tax ledger entry from a single email. Respond with ONLY a JSON object, no other text.
 
 If this email is a genuine invoice, receipt, or payment confirmation:
-{"is_entry": true, "type": "income"|"expense", "date": "YYYY-MM-DD", "description": "short vendor/client + what for", "category": "short category", "amount": number, "deductible_pct": number, "claimable": true|false, "notes": "optional, e.g. currency if not NZD"}
+{"is_entry": true, "type": "income"|"expense", "date": "YYYY-MM-DD", "description": "short vendor/client + what for", "category": "short category", "amount": number, "deductible_pct": number, "claimable": true|false, "gst_applicable": true|false, "notes": "optional, e.g. currency if not NZD"}
 
 Otherwise (marketing, newsletter, unrelated, or too ambiguous to be confident):
 {"is_entry": false}
@@ -1011,6 +1077,7 @@ Rules:
 - type "expense" = a bill/receipt/subscription charge the user is PAYING to someone else.
 - deductible_pct: default 100. Use 50 for meals/entertainment, 15 for home utilities.
 - claimable: false if obviously personal/non-business.
+- gst_applicable: only relevant when type is "income" — true if the client/payer is in New Zealand (GST is charged, amount treated as GST-inclusive at 15%), false if the client/payer is overseas (zero-rated, no GST to claim). Omit or false for expenses.
 - date: use the invoice/transaction date if present in the email, else today's date {{TODAY}}.
 - When genuinely unsure whether this is a real transaction record, respond {"is_entry": false}.`;
 
@@ -1156,7 +1223,9 @@ async function scanGmailForInvoices() {
         rows.push({
           user_id: currentUser.id, type: entry.type, date: entry.date,
           category: entry.category, description: entry.description, amount: entry.amount,
-          deductible_pct: entry.deductible_pct, claimable: entry.claimable, notes: entry.notes || "",
+          deductible_pct: entry.deductible_pct, claimable: entry.claimable,
+          gst_applicable: entry.type === "income" ? !!entry.gst_applicable : false,
+          notes: entry.notes || "",
           gmail_message_id: m.id
         });
       }
@@ -1316,6 +1385,7 @@ async function processRecurring() {
         amount: rule.amount,
         deductible_pct: rule.type === "income" ? 0 : (rule.deductible_pct ?? 100),
         claimable: rule.type === "income" ? null : (rule.claimable || "Pending"),
+        gst_applicable: rule.type === "income" ? !!rule.gst_applicable : false,
         notes: (rule.notes ? rule.notes + " · " : "") + "Auto-logged from recurring rule"
       });
       rule.lastRun = cur;
@@ -1419,6 +1489,7 @@ function openRecurringModal(idx) {
   document.getElementById("recFrequency").value = r ? r.frequency : "monthly";
   document.getElementById("recPct").value = r ? (r.deductible_pct ?? 100) : 100;
   document.getElementById("recClaimable").value = r ? (r.claimable || "Pending") : "Pending";
+  document.getElementById("recGst").value = r ? String(r.gst_applicable !== false) : "true";
   document.getElementById("recEndDate").value = r ? (r.endDate || "") : "";
   document.getElementById("recNotes").value = r ? (r.notes || "") : "";
   document.getElementById("deleteRecurringBtn").classList.toggle("hidden", !r);
@@ -1429,6 +1500,7 @@ function openRecurringModal(idx) {
 function toggleRecurringTypeFields() {
   const isIncome = document.getElementById("recType").value === "income";
   document.getElementById("recExpenseFields").style.display = isIncome ? "none" : "grid";
+  document.getElementById("recIncomeFields").style.display = isIncome ? "block" : "none";
 }
 
 document.getElementById("recType").addEventListener("change", toggleRecurringTypeFields);
@@ -1445,6 +1517,7 @@ document.getElementById("saveRecurringBtn").addEventListener("click", async () =
     frequency: document.getElementById("recFrequency").value,
     deductible_pct: type === "income" ? 0 : (parseFloat(document.getElementById("recPct").value) || 0),
     claimable: type === "income" ? null : document.getElementById("recClaimable").value,
+    gst_applicable: type === "income" ? document.getElementById("recGst").value === "true" : false,
     endDate: document.getElementById("recEndDate").value || null,
     notes: document.getElementById("recNotes").value.trim(),
     active: true,
@@ -1524,11 +1597,13 @@ function renderDashboard() {
   const totalDeductible = expenses.reduce((s, e) => s + e.amount * (e.deductible_pct || 0) / 100, 0);
   const totalClaimable = expenses.filter(e => e.claimable === "Claimed")
     .reduce((s, e) => s + e.amount * (e.deductible_pct || 0) / 100, 0);
+  const totalGst = incomes.filter(e => e.gst_applicable).reduce((s, e) => s + gstComponent(e.amount), 0);
 
   document.getElementById("kpiIncome").textContent = fmt(totalIncome);
   document.getElementById("kpiSpend").textContent = fmt(totalSpend);
   document.getElementById("kpiDeductible").textContent = fmt(totalDeductible);
   document.getElementById("kpiClaimable").textContent = fmt(totalClaimable);
+  document.getElementById("kpiGst").textContent = fmt(totalGst) + " GST collected";
 
   renderChart();
 }
@@ -1635,6 +1710,11 @@ function renderLedger() {
       const deductAmt = isIncome ? "—" : fmt(r.amount * (r.deductible_pct || 0) / 100);
       const claimable = isIncome ? "—" : `<span class="${statusStyles[r.claimable] || ""} text-[11px] px-2 py-1 rounded-full font-bold inline-flex items-center gap-1"><span class="w-1.5 h-1.5 ${statusDot[r.claimable] || ""} rounded-full"></span>${r.claimable || ""}</span>`;
       const pct = isIncome ? "—" : (r.deductible_pct + "%");
+      const gstCell = isIncome
+        ? (r.gst_applicable
+            ? `<span class="text-on-tertiary-container font-semibold">${fmt(gstComponent(r.amount))}</span>`
+            : `<span class="text-on-surface-variant text-[11px] uppercase tracking-wide">No GST</span>`)
+        : "—";
       return `
         <tr class="hover:bg-surface-container-low transition-colors cursor-pointer" data-id="${r.id}">
           <td class="p-stack-md font-body-sm">${r.date || ""}</td>
@@ -1642,6 +1722,7 @@ function renderLedger() {
           <td class="p-stack-md font-body-sm">${r.category || ""}</td>
           <td class="p-stack-md font-body-sm">${r.description || ""}</td>
           <td class="p-stack-md font-data-mono text-right ${isIncome ? "text-on-tertiary-container" : ""}">${fmt(r.amount)}</td>
+          <td class="p-stack-md font-data-mono text-right">${gstCell}</td>
           <td class="p-stack-md font-data-mono text-right">${pct}</td>
           <td class="p-stack-md font-data-mono text-right text-on-tertiary-container font-semibold">${deductAmt}</td>
           <td class="p-stack-md text-center">${claimable}</td>
@@ -1655,11 +1736,14 @@ function renderLedger() {
     });
   }
 
-  // Footer totals (filtered, expense only)
+  // Footer totals (filtered): expense amount/deductible, income GST collected
   const exp = rows.filter(r => r.type === "expense");
+  const inc = rows.filter(r => r.type === "income");
   const totalAmt = exp.reduce((s, r) => s + r.amount, 0);
   const totalDeduct = exp.reduce((s, r) => s + r.amount * (r.deductible_pct || 0) / 100, 0);
+  const totalGst = inc.filter(r => r.gst_applicable).reduce((s, r) => s + gstComponent(r.amount), 0);
   document.getElementById("footAmount").textContent = fmt(totalAmt);
+  document.getElementById("footGst").textContent = fmt(totalGst);
   document.getElementById("footDeduct").textContent = fmt(totalDeduct);
 }
 
@@ -1689,6 +1773,7 @@ function openEntryModal(id) {
   document.getElementById("entryAmount").value = e ? e.amount : "";
   document.getElementById("entryPct").value = e ? (e.deductible_pct ?? 100) : 100;
   document.getElementById("entryClaimable").value = e ? (e.claimable || "Pending") : "Pending";
+  document.getElementById("entryGst").value = e ? String(e.gst_applicable !== false) : "true";
   document.getElementById("entryNotes").value = e ? (e.notes || "") : "";
   document.getElementById("entryRecurring").checked = false;
   document.getElementById("entryFrequency").value = "monthly";
@@ -1696,6 +1781,7 @@ function openEntryModal(id) {
   document.getElementById("entryRecurringFields").classList.add("hidden");
   document.getElementById("deleteEntryBtn").classList.toggle("hidden", !e);
   toggleEntryTypeFields();
+  updateEntryGstAmount();
   openModal("entryModal");
 }
 
@@ -1707,8 +1793,22 @@ function toggleEntryTypeFields() {
   const isIncome = document.getElementById("entryType").value === "income";
   document.getElementById("entryPctWrap").style.display = isIncome ? "none" : "";
   document.getElementById("entryClaimableWrap").style.display = isIncome ? "none" : "";
+  document.getElementById("entryGstWrap").classList.toggle("hidden", !isIncome);
 }
-document.getElementById("entryType").addEventListener("change", toggleEntryTypeFields);
+document.getElementById("entryType").addEventListener("change", () => { toggleEntryTypeFields(); updateEntryGstAmount(); });
+
+function updateEntryGstAmount() {
+  const isIncome = document.getElementById("entryType").value === "income";
+  const gstApplicable = document.getElementById("entryGst").value === "true";
+  const amount = parseFloat(document.getElementById("entryAmount").value) || 0;
+  const label = document.getElementById("entryGstAmount");
+  if (!isIncome) return;
+  label.textContent = gstApplicable
+    ? `GST component: ${fmt(gstComponent(amount))} (amount is treated as GST-inclusive)`
+    : "No GST — this income is zero-rated/overseas and can't be claimed against.";
+}
+document.getElementById("entryAmount").addEventListener("input", updateEntryGstAmount);
+document.getElementById("entryGst").addEventListener("change", updateEntryGstAmount);
 
 document.getElementById("newEntryBtn").addEventListener("click", () => openEntryModal(null));
 document.getElementById("manageRecurringBtn").addEventListener("click", () => setView("recurring"));
@@ -1726,6 +1826,7 @@ document.getElementById("saveEntryBtn").addEventListener("click", async () => {
     amount: parseFloat(document.getElementById("entryAmount").value) || 0,
     deductible_pct: type === "expense" ? (parseFloat(document.getElementById("entryPct").value) || 0) : 0,
     claimable: type === "expense" ? document.getElementById("entryClaimable").value : null,
+    gst_applicable: type === "income" ? document.getElementById("entryGst").value === "true" : false,
     notes: document.getElementById("entryNotes").value.trim()
   };
 
@@ -1740,6 +1841,7 @@ document.getElementById("saveEntryBtn").addEventListener("click", async () => {
         frequency: document.getElementById("entryFrequency").value,
         deductible_pct: entry.deductible_pct,
         claimable: entry.claimable,
+        gst_applicable: entry.gst_applicable,
         endDate: document.getElementById("entryEndDate").value || null,
         notes: entry.notes,
         active: true,
@@ -1783,9 +1885,11 @@ document.getElementById("deleteEntryBtn").addEventListener("click", async () => 
 // ============================================================================
 document.getElementById("exportBtn").addEventListener("click", () => {
   if (ledger.length === 0) { alert("No entries to export."); return; }
-  const headers = ["Date", "Type", "Category", "Description", "Amount NZD", "Deductible %", "Deductible Amount NZD", "Claimable", "Notes"];
+  const headers = ["Date", "Type", "Category", "Description", "Amount NZD", "GST Applicable", "GST Amount NZD", "Deductible %", "Deductible Amount NZD", "Claimable", "Notes"];
   const rows = ledger.map(r => [
     r.date, r.type, r.category, r.description, r.amount.toFixed(2),
+    r.type === "income" ? (r.gst_applicable ? "Yes" : "No") : "",
+    r.type === "income" && r.gst_applicable ? gstComponent(r.amount).toFixed(2) : "",
     r.type === "expense" ? r.deductible_pct : "",
     r.type === "expense" ? (r.amount * r.deductible_pct / 100).toFixed(2) : "",
     r.claimable || "", r.notes || ""
@@ -1819,6 +1923,7 @@ Output format — STRICT. Reply with a fenced JSON code block first, then option
       "amount": 123.45,
       "deductible_pct": 100,
       "claimable": "Pending",
+      "gst_applicable": true,
       "notes": "context, addresses, distance, etc."
     }
   ],
@@ -1831,7 +1936,7 @@ Rules:
 - Currency is NZD.
 - For trips: category="Travel", deductible_pct=100, claimable="Pending". Estimate one-way driving distance in km from the addresses. Compute amount = distance_km × {{MILEAGE_RATE}}. Put the route, estimated km, and rate in "notes".
 - For receipt/invoice attachments (photo or PDF): extract merchant→description, total→amount, date. Pick the best category. Default deductible_pct=100 unless clearly mixed-use (meals=50, home utilities=15).
-- For income: deductible_pct can be 0, claimable can be null.
+- For income: deductible_pct can be 0, claimable can be null. "gst_applicable" only matters for income — set it true when the income is from a New Zealand client/source (GST is charged, amount is treated as GST-inclusive at 15%), and false for overseas/international income, which is zero-rated and cannot be claimed against for GST purposes. If the country of the client/payer isn't clear, ask, or default to true only when there's a clear NZ indicator (NZD invoice to a NZ business, NZ address, etc.) — otherwise default to false.
 - If the user is just asking a question (no transaction to log), set "actions" to an empty array [] and put your answer in "reply".
 - Always include the JSON block, even for plain questions. Make "reply" conversational, max 2 sentences.
 - Today's date is {{TODAY}}. If the user says "today", use today's date.
@@ -1851,6 +1956,7 @@ If the user is setting up a RECURRING expense or income (says words like "recurr
       "frequency": "every4weeks" | "monthly" | "quarterly" | "yearly",
       "deductible_pct": 100,
       "claimable": "Pending",
+      "gst_applicable": true,
       "endDate": null,
       "notes": ""
     }
@@ -2112,6 +2218,7 @@ async function sendMessage() {
           amount: parseFloat(a.amount) || 0,
           deductible_pct: a.type === "income" ? 0 : (a.deductible_pct ?? 100),
           claimable: a.type === "income" ? null : (a.claimable || "Pending"),
+          gst_applicable: a.type === "income" ? !!a.gst_applicable : false,
           notes: a.notes || ""
         };
         try {
@@ -2132,6 +2239,7 @@ async function sendMessage() {
           frequency: r.frequency || "monthly",
           deductible_pct: r.type === "income" ? 0 : (r.deductible_pct ?? 100),
           claimable: r.type === "income" ? null : (r.claimable || "Pending"),
+          gst_applicable: r.type === "income" ? !!r.gst_applicable : false,
           endDate: r.endDate || null,
           notes: r.notes || "",
           active: true,
@@ -2225,45 +2333,133 @@ function closeExpensePanel() { /* no-op now, kept for compatibility */ }
 // AUTH FLOW
 // ============================================================================
 const authEmailInput = document.getElementById("authEmail");
+const authPasswordInput = document.getElementById("authPassword");
 const authSendBtn = document.getElementById("authSendBtn");
-const authBackBtn = document.getElementById("authBackBtn");
 const authError = document.getElementById("authError");
+
+// A password-recovery link lands here with type=recovery in the URL; hold off
+// booting the app until the user has actually set a new password.
+let inRecoveryFlow = /type=recovery/.test(window.location.hash) || /type=recovery/.test(window.location.search);
+
+function showAuthStep(id) {
+  ["authStep1", "authForgot", "authForgotSent", "authRecovery", "authLoading"].forEach(s => {
+    document.getElementById(s).classList.toggle("hidden", s !== id);
+  });
+}
 
 authSendBtn.addEventListener("click", async () => {
   const email = authEmailInput.value.trim();
+  const password = authPasswordInput.value;
   if (!isValidEmail(email)) { showAuthError("Please enter a valid email."); return; }
+  if (!password) { showAuthError("Please enter your password."); return; }
   authError.classList.add("hidden");
   authSendBtn.disabled = true;
-  authSendBtn.textContent = "Sending...";
+  authSendBtn.textContent = "Signing in...";
   try {
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + window.location.pathname }
-    });
+    const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    document.getElementById("authStep1").classList.add("hidden");
-    document.getElementById("authEmailEcho").textContent = email;
-    document.getElementById("authStep2").classList.remove("hidden");
+    // onAuthStateChange (SIGNED_IN) takes it from here.
   } catch (e) {
-    showAuthError(e.message || "Failed to send link.");
+    showAuthError(e.message || "Failed to sign in.");
   } finally {
     authSendBtn.disabled = false;
-    authSendBtn.innerHTML = '<span class="material-symbols-outlined text-base">mail</span> Send Magic Link';
+    authSendBtn.innerHTML = '<span class="material-symbols-outlined text-base">login</span> Sign In';
   }
 });
-authEmailInput.addEventListener("keydown", (e) => { if (e.key === "Enter") authSendBtn.click(); });
-authBackBtn.addEventListener("click", () => {
-  document.getElementById("authStep2").classList.add("hidden");
-  document.getElementById("authStep1").classList.remove("hidden");
-});
+authPasswordInput.addEventListener("keydown", (e) => { if (e.key === "Enter") authSendBtn.click(); });
+authEmailInput.addEventListener("keydown", (e) => { if (e.key === "Enter") authPasswordInput.focus(); });
 
 function showAuthError(msg) { authError.textContent = msg; authError.classList.remove("hidden"); }
 
 function showAuthLoading() {
-  document.getElementById("authStep1").classList.add("hidden");
-  document.getElementById("authStep2").classList.add("hidden");
-  document.getElementById("authLoading").classList.remove("hidden");
+  showAuthStep("authLoading");
 }
+
+// ---- Forgot password ----
+const authForgotLink = document.getElementById("authForgotLink");
+const authForgotEmailInput = document.getElementById("authForgotEmail");
+const authForgotSendBtn = document.getElementById("authForgotSendBtn");
+const authForgotBackBtn = document.getElementById("authForgotBackBtn");
+const authForgotSentBackBtn = document.getElementById("authForgotSentBackBtn");
+const authForgotError = document.getElementById("authForgotError");
+
+authForgotLink.addEventListener("click", () => {
+  authForgotEmailInput.value = authEmailInput.value.trim();
+  authForgotError.classList.add("hidden");
+  showAuthStep("authForgot");
+});
+authForgotBackBtn.addEventListener("click", () => showAuthStep("authStep1"));
+authForgotSentBackBtn.addEventListener("click", () => showAuthStep("authStep1"));
+
+authForgotSendBtn.addEventListener("click", async () => {
+  const email = authForgotEmailInput.value.trim();
+  if (!isValidEmail(email)) {
+    authForgotError.textContent = "Please enter a valid email.";
+    authForgotError.classList.remove("hidden");
+    return;
+  }
+  authForgotError.classList.add("hidden");
+  authForgotSendBtn.disabled = true;
+  authForgotSendBtn.textContent = "Sending...";
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) throw error;
+    document.getElementById("authForgotEmailEcho").textContent = email;
+    showAuthStep("authForgotSent");
+  } catch (e) {
+    authForgotError.textContent = e.message || "Failed to send reset link.";
+    authForgotError.classList.remove("hidden");
+  } finally {
+    authForgotSendBtn.disabled = false;
+    authForgotSendBtn.innerHTML = '<span class="material-symbols-outlined text-base">mail</span> Send Reset Link';
+  }
+});
+
+// ---- Password recovery (arriving from the reset-link email) ----
+const authNewPasswordInput = document.getElementById("authNewPassword");
+const authNewPassword2Input = document.getElementById("authNewPassword2");
+const authSetPasswordBtn = document.getElementById("authSetPasswordBtn");
+const authRecoveryError = document.getElementById("authRecoveryError");
+
+function showAuthRecovery() {
+  inRecoveryFlow = true;
+  authRecoveryError.classList.add("hidden");
+  showAuthStep("authRecovery");
+}
+
+authSetPasswordBtn.addEventListener("click", async () => {
+  const pw1 = authNewPasswordInput.value;
+  const pw2 = authNewPassword2Input.value;
+  if (!pw1 || pw1.length < 6) {
+    authRecoveryError.textContent = "Password must be at least 6 characters.";
+    authRecoveryError.classList.remove("hidden");
+    return;
+  }
+  if (pw1 !== pw2) {
+    authRecoveryError.textContent = "Passwords don't match.";
+    authRecoveryError.classList.remove("hidden");
+    return;
+  }
+  authRecoveryError.classList.add("hidden");
+  authSetPasswordBtn.disabled = true;
+  authSetPasswordBtn.textContent = "Saving...";
+  try {
+    const { error } = await sb.auth.updateUser({ password: pw1 });
+    if (error) throw error;
+    inRecoveryFlow = false;
+    history.replaceState(null, "", window.location.pathname);
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) onSignedIn(session.user);
+  } catch (e) {
+    authRecoveryError.textContent = e.message || "Failed to set password.";
+    authRecoveryError.classList.remove("hidden");
+  } finally {
+    authSetPasswordBtn.disabled = false;
+    authSetPasswordBtn.innerHTML = '<span class="material-symbols-outlined text-base">lock_reset</span> Set Password';
+  }
+});
 
 // ============================================================================
 // REAL-TIME SUBSCRIPTIONS
@@ -2339,14 +2535,17 @@ function onSignedOut() {
   sessionStorage.removeItem("tp_gmail_token");
   sessionStorage.removeItem("tp_gmail_token_exp");
   document.body.classList.remove("signed-in");
-  document.getElementById("authLoading").classList.add("hidden");
-  document.getElementById("authStep2").classList.add("hidden");
-  document.getElementById("authStep1").classList.remove("hidden");
+  inRecoveryFlow = false;
+  showAuthStep("authStep1");
   authEmailInput.value = "";
+  authPasswordInput.value = "";
 }
 
 sb.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_IN" && session?.user) {
+  if (event === "PASSWORD_RECOVERY") {
+    showAuthRecovery();
+  } else if (event === "SIGNED_IN" && session?.user) {
+    if (inRecoveryFlow) return; // wait for the user to set a new password first
     if (!currentUser || currentUser.id !== session.user.id) onSignedIn(session.user);
   } else if (event === "SIGNED_OUT") {
     onSignedOut();
@@ -2356,7 +2555,7 @@ sb.auth.onAuthStateChange((event, session) => {
 // Initial session check
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) onSignedIn(session.user);
+  if (session?.user && !inRecoveryFlow) onSignedIn(session.user);
 })();
 </script>
 </body>
