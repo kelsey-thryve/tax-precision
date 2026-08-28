@@ -266,7 +266,7 @@
             </div>
             <p class="text-on-surface-variant font-label-md text-label-md mb-1 uppercase tracking-wider">Total Income</p>
             <h2 id="kpiIncome" class="font-display text-display text-on-tertiary-container">$0.00</h2>
-            <p id="kpiGst" class="text-on-surface-variant font-body-sm mt-1">$0.00 GST collected</p>
+            <p id="kpiGst" class="text-on-surface-variant font-body-sm mt-1">$0.00 GST collected this month</p>
           </div>
 
           <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg">
@@ -289,8 +289,9 @@
             <div class="flex justify-between items-start mb-stack-md">
               <div class="p-2 bg-on-tertiary-container rounded-lg"><span class="material-symbols-outlined text-white">savings</span></div>
             </div>
-            <p class="text-on-primary-container opacity-80 font-label-md text-label-md mb-1 uppercase tracking-wider">Total Claimable</p>
+            <p class="text-on-primary-container opacity-80 font-label-md text-label-md mb-1 uppercase tracking-wider">GST Claimable (This Month)</p>
             <h2 id="kpiClaimable" class="font-display text-display text-white">$0.00</h2>
+            <p class="text-on-primary-container opacity-70 font-body-sm mt-1">GST on Claimed expenses, at their business-use %</p>
           </div>
         </div>
 
@@ -1590,20 +1591,28 @@ function updateApiStatus() {
 // DASHBOARD
 // ============================================================================
 function renderDashboard() {
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const isThisMonth = (e) => (e.date || "").slice(0, 7) === currentMonth;
+
   const expenses = ledger.filter(e => e.type === "expense");
   const incomes = ledger.filter(e => e.type === "income");
   const totalIncome = incomes.reduce((s, e) => s + e.amount, 0);
   const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
   const totalDeductible = expenses.reduce((s, e) => s + e.amount * (e.deductible_pct || 0) / 100, 0);
-  const totalClaimable = expenses.filter(e => e.claimable === "Claimed")
-    .reduce((s, e) => s + e.amount * (e.deductible_pct || 0) / 100, 0);
-  const totalGst = incomes.filter(e => e.gst_applicable).reduce((s, e) => s + gstComponent(e.amount), 0);
+
+  // GST figures are scoped to the current calendar month (matches a monthly GST filing period).
+  // You can only claim back the GST on an expense to the same % it's business-deductible —
+  // a 50%-deductible expense only yields 50% of its GST component as an input tax credit.
+  const gstCollectedThisMonth = incomes.filter(e => e.gst_applicable && isThisMonth(e))
+    .reduce((s, e) => s + gstComponent(e.amount), 0);
+  const gstClaimableThisMonth = expenses.filter(e => e.claimable === "Claimed" && isThisMonth(e))
+    .reduce((s, e) => s + gstComponent(e.amount) * (e.deductible_pct || 0) / 100, 0);
 
   document.getElementById("kpiIncome").textContent = fmt(totalIncome);
   document.getElementById("kpiSpend").textContent = fmt(totalSpend);
   document.getElementById("kpiDeductible").textContent = fmt(totalDeductible);
-  document.getElementById("kpiClaimable").textContent = fmt(totalClaimable);
-  document.getElementById("kpiGst").textContent = fmt(totalGst) + " GST collected";
+  document.getElementById("kpiClaimable").textContent = fmt(gstClaimableThisMonth);
+  document.getElementById("kpiGst").textContent = fmt(gstCollectedThisMonth) + " GST collected this month";
 
   renderChart();
 }
