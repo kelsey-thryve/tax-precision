@@ -254,9 +254,36 @@
     <!-- ============ DASHBOARD ============ -->
     <section id="view-dashboard" class="view active p-4 md:p-margin-page">
       <div class="max-w-container-max mx-auto">
-        <header class="mb-stack-lg">
-          <h1 class="font-h1 text-h1 text-on-surface">Financial Overview</h1>
-          <p class="text-on-surface-variant font-body-md mt-1">Real-time tracking for your tax liabilities and deductions.</p>
+        <header class="mb-stack-lg flex flex-wrap items-end justify-between gap-stack-md">
+          <div>
+            <h1 class="font-h1 text-h1 text-on-surface">Financial Overview</h1>
+            <p class="text-on-surface-variant font-body-md mt-1">Real-time tracking for your tax liabilities and deductions.</p>
+          </div>
+          <div class="flex flex-wrap items-end gap-stack-sm">
+            <div class="space-y-unit">
+              <label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Date Range</label>
+              <select id="dashboardRangePreset" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm min-w-[160px]">
+                <option value="this_month">This Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="last_7">Last 7 Days</option>
+                <option value="last_30">Last 30 Days</option>
+                <option value="last_90">Last 90 Days</option>
+                <option value="ytd">Year to Date</option>
+                <option value="all_time">All Time</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            <div id="dashboardCustomRange" class="hidden flex flex-wrap items-end gap-stack-sm">
+              <div class="space-y-unit">
+                <label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">From</label>
+                <input id="dashboardRangeStart" type="date" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm"/>
+              </div>
+              <div class="space-y-unit">
+                <label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">To</label>
+                <input id="dashboardRangeEnd" type="date" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm"/>
+              </div>
+            </div>
+          </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-gutter">
@@ -289,7 +316,7 @@
             <div class="flex justify-between items-start mb-stack-md">
               <div class="p-2 bg-on-tertiary-container rounded-lg"><span class="material-symbols-outlined text-white">savings</span></div>
             </div>
-            <p class="text-on-primary-container opacity-80 font-label-md text-label-md mb-1 uppercase tracking-wider">GST Claimable (This Month)</p>
+            <p id="kpiClaimableLabel" class="text-on-primary-container opacity-80 font-label-md text-label-md mb-1 uppercase tracking-wider">GST Claimable (This Month)</p>
             <h2 id="kpiClaimable" class="font-display text-display text-white">$0.00</h2>
             <p class="text-on-primary-container opacity-70 font-body-sm mt-1">GST on Claimed expenses, at their business-use %</p>
           </div>
@@ -1590,29 +1617,99 @@ function updateApiStatus() {
 // ============================================================================
 // DASHBOARD
 // ============================================================================
-function renderDashboard() {
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-  const isThisMonth = (e) => (e.date || "").slice(0, 7) === currentMonth;
+// Computes the active dashboard date range from the preset selector (or the
+// custom From/To inputs when "Custom Range" is selected). Dates are plain
+// YYYY-MM-DD strings so they compare lexically against ledger entry dates.
+function getDashboardRange() {
+  const preset = document.getElementById("dashboardRangePreset").value;
+  const pad = (n) => String(n).padStart(2, "0");
+  const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+  const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+  const now = new Date();
 
-  const expenses = ledger.filter(e => e.type === "expense");
-  const incomes = ledger.filter(e => e.type === "income");
+  let start, end, label, phrase;
+  switch (preset) {
+    case "last_month": {
+      const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      start = startOfMonth(lm); end = endOfMonth(lm);
+      label = "Last Month"; phrase = "last month";
+      break;
+    }
+    case "last_7":
+      start = addDays(now, -6); end = now;
+      label = "Last 7 Days"; phrase = "in the last 7 days";
+      break;
+    case "last_30":
+      start = addDays(now, -29); end = now;
+      label = "Last 30 Days"; phrase = "in the last 30 days";
+      break;
+    case "last_90":
+      start = addDays(now, -89); end = now;
+      label = "Last 90 Days"; phrase = "in the last 90 days";
+      break;
+    case "ytd":
+      start = new Date(now.getFullYear(), 0, 1); end = now;
+      label = "Year to Date"; phrase = "year to date";
+      break;
+    case "all_time":
+      start = null; end = null;
+      label = "All Time"; phrase = "all time";
+      break;
+    case "custom": {
+      const s = document.getElementById("dashboardRangeStart").value;
+      const e = document.getElementById("dashboardRangeEnd").value;
+      start = s || null; end = e || null;
+      label = "Custom Range"; phrase = "in the selected range";
+      return { start, end, label, phrase };
+    }
+    case "this_month":
+    default:
+      start = startOfMonth(now); end = endOfMonth(now);
+      label = "This Month"; phrase = "this month";
+      break;
+  }
+  return { start: start ? toISO(start) : null, end: end ? toISO(end) : null, label, phrase };
+}
+
+function toggleDashboardCustomRange() {
+  const isCustom = document.getElementById("dashboardRangePreset").value === "custom";
+  document.getElementById("dashboardCustomRange").classList.toggle("hidden", !isCustom);
+}
+
+function renderDashboard() {
+  const { start, end, label, phrase } = getDashboardRange();
+  const inRange = (e) => {
+    const d = e.date || "";
+    if (!d) return false;
+    if (start && d < start) return false;
+    if (end && d > end) return false;
+    return true;
+  };
+
+  const rangeLedger = ledger.filter(inRange);
+  const expenses = rangeLedger.filter(e => e.type === "expense");
+  const incomes = rangeLedger.filter(e => e.type === "income");
   const totalIncome = incomes.reduce((s, e) => s + e.amount, 0);
   const totalSpend = expenses.reduce((s, e) => s + e.amount, 0);
   const totalDeductible = expenses.reduce((s, e) => s + e.amount * (e.deductible_pct || 0) / 100, 0);
 
-  // GST figures are scoped to the current calendar month (matches a monthly GST filing period).
-  // You can only claim back the GST on an expense to the same % it's business-deductible —
-  // a 50%-deductible expense only yields 50% of its GST component as an input tax credit.
-  const gstCollectedThisMonth = incomes.filter(e => e.gst_applicable && isThisMonth(e))
+  // GST figures are scoped to the selected date range (defaults to the current
+  // calendar month, matching a monthly GST filing period). You can only claim
+  // back the GST on an expense to the same % it's business-deductible — a
+  // 50%-deductible expense only yields 50% of its GST component as an input tax credit.
+  const gstCollected = incomes.filter(e => e.gst_applicable)
     .reduce((s, e) => s + gstComponent(e.amount), 0);
-  const gstClaimableThisMonth = expenses.filter(e => e.claimable === "Claimed" && isThisMonth(e))
+  const gstClaimable = expenses.filter(e => e.claimable === "Claimed")
     .reduce((s, e) => s + gstComponent(e.amount) * (e.deductible_pct || 0) / 100, 0);
 
   document.getElementById("kpiIncome").textContent = fmt(totalIncome);
   document.getElementById("kpiSpend").textContent = fmt(totalSpend);
   document.getElementById("kpiDeductible").textContent = fmt(totalDeductible);
-  document.getElementById("kpiClaimable").textContent = fmt(gstClaimableThisMonth);
-  document.getElementById("kpiGst").textContent = fmt(gstCollectedThisMonth) + " GST collected this month";
+  document.getElementById("kpiClaimable").textContent = fmt(gstClaimable);
+  document.getElementById("kpiGst").textContent = fmt(gstCollected) + " GST collected " + phrase;
+  document.getElementById("kpiClaimableLabel").textContent = `GST Claimable (${label})`;
 
   renderChart();
 }
@@ -1666,6 +1763,13 @@ function renderChart() {
     }
   });
 }
+
+document.getElementById("dashboardRangePreset").addEventListener("change", () => {
+  toggleDashboardCustomRange();
+  renderDashboard();
+});
+document.getElementById("dashboardRangeStart").addEventListener("change", renderDashboard);
+document.getElementById("dashboardRangeEnd").addEventListener("change", renderDashboard);
 
 // ============================================================================
 // LEDGER
