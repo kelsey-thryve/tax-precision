@@ -383,6 +383,29 @@
               <label class="font-label-md text-label-md text-on-surface-variant">MIN AMOUNT</label>
               <input id="filterMin" type="number" min="0" step="0.01" placeholder="0.00" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm w-32"/>
             </div>
+            <div class="space-y-unit">
+              <label class="font-label-md text-label-md text-on-surface-variant">DATE RANGE</label>
+              <select id="filterDateRange" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm min-w-[160px]">
+                <option value="all_time">All Time</option>
+                <option value="this_month">This Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="last_7">Last 7 Days</option>
+                <option value="last_30">Last 30 Days</option>
+                <option value="last_90">Last 90 Days</option>
+                <option value="ytd">Year to Date</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            <div id="filterDateCustomRange" class="hidden flex flex-wrap items-end gap-stack-sm">
+              <div class="space-y-unit">
+                <label class="font-label-md text-label-md text-on-surface-variant">FROM</label>
+                <input id="filterDateStart" type="date" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm"/>
+              </div>
+              <div class="space-y-unit">
+                <label class="font-label-md text-label-md text-on-surface-variant">TO</label>
+                <input id="filterDateEnd" type="date" class="bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-sm"/>
+              </div>
+            </div>
           </div>
           <div class="flex gap-stack-sm">
             <button id="clearFiltersBtn" class="flex items-center gap-unit px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high transition-colors">
@@ -1617,11 +1640,10 @@ function updateApiStatus() {
 // ============================================================================
 // DASHBOARD
 // ============================================================================
-// Computes the active dashboard date range from the preset selector (or the
-// custom From/To inputs when "Custom Range" is selected). Dates are plain
-// YYYY-MM-DD strings so they compare lexically against ledger entry dates.
-function getDashboardRange() {
-  const preset = document.getElementById("dashboardRangePreset").value;
+// Computes a date range from a preset value (or the given custom From/To
+// strings when preset is "custom"). Dates are plain YYYY-MM-DD strings so
+// they compare lexically against ledger entry dates.
+function computeDateRangeFromPreset(preset, customStart, customEnd) {
   const pad = (n) => String(n).padStart(2, "0");
   const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
@@ -1657,13 +1679,11 @@ function getDashboardRange() {
       start = null; end = null;
       label = "All Time"; phrase = "all time";
       break;
-    case "custom": {
-      const s = document.getElementById("dashboardRangeStart").value;
-      const e = document.getElementById("dashboardRangeEnd").value;
-      start = s || null; end = e || null;
-      label = "Custom Range"; phrase = "in the selected range";
-      return { start, end, label, phrase };
-    }
+    case "custom":
+      return {
+        start: customStart || null, end: customEnd || null,
+        label: "Custom Range", phrase: "in the selected range"
+      };
     case "this_month":
     default:
       start = startOfMonth(now); end = endOfMonth(now);
@@ -1671,6 +1691,13 @@ function getDashboardRange() {
       break;
   }
   return { start: start ? toISO(start) : null, end: end ? toISO(end) : null, label, phrase };
+}
+
+function getDashboardRange() {
+  const preset = document.getElementById("dashboardRangePreset").value;
+  const s = document.getElementById("dashboardRangeStart").value;
+  const e = document.getElementById("dashboardRangeEnd").value;
+  return computeDateRangeFromPreset(preset, s, e);
 }
 
 function toggleDashboardCustomRange() {
@@ -1781,16 +1808,32 @@ const statusStyles = {
 };
 const statusDot = { Claimed: "bg-on-tertiary-container", Pending: "bg-on-secondary-container", Flagged: "bg-error" };
 
+function getLedgerRange() {
+  const preset = document.getElementById("filterDateRange").value;
+  const s = document.getElementById("filterDateStart").value;
+  const e = document.getElementById("filterDateEnd").value;
+  return computeDateRangeFromPreset(preset, s, e);
+}
+
+function toggleLedgerCustomRange() {
+  const isCustom = document.getElementById("filterDateRange").value === "custom";
+  document.getElementById("filterDateCustomRange").classList.toggle("hidden", !isCustom);
+}
+
 function getFilteredLedger() {
   const type = document.getElementById("filterType").value;
   const cat = document.getElementById("filterCategory").value;
   const claim = document.getElementById("filterClaimable").value;
   const min = parseFloat(document.getElementById("filterMin").value) || 0;
+  const { start, end } = getLedgerRange();
   return ledger.filter(e => {
     if (type !== "all" && e.type !== type) return false;
     if (cat !== "all" && e.category !== cat) return false;
     if (claim !== "all" && e.claimable !== claim) return false;
     if (e.amount < min) return false;
+    const d = e.date || "";
+    if (start && d < start) return false;
+    if (end && d > end) return false;
     return true;
   });
 }
@@ -1860,15 +1903,23 @@ function renderLedger() {
   document.getElementById("footDeduct").textContent = fmt(totalDeduct);
 }
 
-["filterType", "filterCategory", "filterClaimable", "filterMin"].forEach(id => {
+["filterType", "filterCategory", "filterClaimable", "filterMin", "filterDateStart", "filterDateEnd"].forEach(id => {
   document.getElementById(id).addEventListener("change", renderLedger);
   document.getElementById(id).addEventListener("input", renderLedger);
+});
+document.getElementById("filterDateRange").addEventListener("change", () => {
+  toggleLedgerCustomRange();
+  renderLedger();
 });
 document.getElementById("clearFiltersBtn").addEventListener("click", () => {
   document.getElementById("filterType").value = "all";
   document.getElementById("filterCategory").value = "all";
   document.getElementById("filterClaimable").value = "all";
   document.getElementById("filterMin").value = "";
+  document.getElementById("filterDateRange").value = "all_time";
+  document.getElementById("filterDateStart").value = "";
+  document.getElementById("filterDateEnd").value = "";
+  toggleLedgerCustomRange();
   renderLedger();
 });
 
