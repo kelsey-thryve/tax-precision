@@ -1,0 +1,8 @@
+.DS_Store
+*.zip
+stitch_automated_tax_expense_tracker (1)/
+.claude/
+*.csv
+CLAUDE.md
+DESIGN.md
+Image *.html

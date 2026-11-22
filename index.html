@@ -245,6 +245,8 @@
         <span class="font-body-md text-body-md">Settings</span>
       </a>
       <button id="exportBtn" class="mt-stack-lg w-full py-2.5 bg-primary text-white rounded-lg font-semibold text-body-md hover:bg-primary-container transition-colors">Export CSV</button>
+      <button id="importBtn" class="mt-stack-sm w-full py-2.5 border border-outline-variant text-on-surface rounded-lg font-semibold text-body-md hover:bg-surface-container-high transition-colors">Import CSV</button>
+      <input id="importFileInput" type="file" accept=".csv,text/csv" class="hidden"/>
     </div>
   </nav>
 
@@ -762,6 +764,26 @@
         </div>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ============ IMPORT CSV MODAL ============ -->
+<div id="importModal" class="modal-backdrop fixed inset-0 bg-inverse-surface/40 z-[80] items-center justify-center backdrop-blur-[2px]">
+  <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-3xl p-stack-lg max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-stack-lg">
+      <h2 class="font-h2 text-h2 text-primary">Import CSV</h2>
+      <button class="closeModal p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div id="importPreview" class="mb-stack-lg"></div>
+    <div class="text-xs text-on-surface-variant mb-stack-md">
+      Required columns: <strong>Date</strong>, <strong>Description</strong>, <strong>Amount</strong>.
+      Optional: Type (income/expense), Category, Deductible %, Claimable, Notes.
+      Dates accepted as YYYY-MM-DD or DD/MM/YYYY. Duplicates (same date + description + amount) are skipped automatically.
+    </div>
+    <div class="flex justify-end gap-stack-sm pt-stack-md border-t border-outline-variant">
+      <button id="importCancelBtn" type="button" class="closeModal px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high">Cancel</button>
+      <button id="importConfirmBtn" type="button" class="px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Import</button>
+    </div>
   </div>
 </div>
 
@@ -2066,6 +2088,184 @@ document.getElementById("exportBtn").addEventListener("click", () => {
   a.click();
   URL.revokeObjectURL(url);
 });
+
+// ============================================================================
+// IMPORT CSV
+// ============================================================================
+function parseCSV(text) {
+  const rows = [];
+  let cur = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ",") { cur.push(field); field = ""; }
+      else if (c === "\n") { cur.push(field); rows.push(cur); cur = []; field = ""; }
+      else if (c === "\r") { /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length || cur.length) { cur.push(field); rows.push(cur); }
+  return rows.filter(r => r.some(f => f && f.trim()));
+}
+function parseImportDate(s) {
+  if (!s) return null;
+  s = String(s).trim();
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  return null;
+}
+function colIdx(headers, names) {
+  for (const n of names) {
+    const i = headers.indexOf(n.toLowerCase());
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+async function handleImportCSV(file) {
+  let text;
+  try { text = await file.text(); }
+  catch (e) { alert("Couldn't read file: " + e.message); return; }
+  const rows = parseCSV(text);
+  if (rows.length < 2) { alert("CSV is empty or missing a header row."); return; }
+  const headers = rows[0].map(h => String(h).trim().toLowerCase());
+  const iDate = colIdx(headers, ["date"]);
+  const iType = colIdx(headers, ["type"]);
+  const iCategory = colIdx(headers, ["category"]);
+  const iDesc = colIdx(headers, ["description", "what", "source"]);
+  const iAmount = colIdx(headers, ["amount nzd", "amount paid", "amount"]);
+  const iPct = colIdx(headers, ["deductible %", "deductible%", "claim %", "claim%"]);
+  const iClaimable = colIdx(headers, ["claimable"]);
+  const iNotes = colIdx(headers, ["notes", "note"]);
+  if (iDate < 0 || iDesc < 0 || iAmount < 0) {
+    alert("CSV must have at least Date, Description, and Amount columns.");
+    return;
+  }
+  const parsed = [];
+  const errors = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const date = parseImportDate(row[iDate]);
+    if (!date) { errors.push(`Row ${r + 1}: invalid date "${row[iDate]}"`); continue; }
+    const rawAmt = String(row[iAmount] || "").replace(/[$,\s]/g, "");
+    const amount = parseFloat(rawAmt);
+    if (isNaN(amount)) { errors.push(`Row ${r + 1}: invalid amount "${row[iAmount]}"`); continue; }
+    let type = iType >= 0 ? String(row[iType] || "").trim().toLowerCase() : "";
+    if (type !== "income" && type !== "expense") type = "expense";
+    let pct = 100;
+    if (iPct >= 0 && String(row[iPct] || "").trim() !== "") {
+      const p = parseFloat(String(row[iPct]).replace(/%/g, ""));
+      if (!isNaN(p)) pct = p;
+    }
+    const claimable = type === "expense"
+      ? (iClaimable >= 0 && String(row[iClaimable] || "").trim() ? String(row[iClaimable]).trim() : "Pending")
+      : null;
+    parsed.push({
+      type, date,
+      category: iCategory >= 0 ? String(row[iCategory] || "").trim() : "",
+      description: String(row[iDesc] || "").trim(),
+      amount,
+      deductible_pct: type === "expense" ? pct : 0,
+      claimable,
+      notes: iNotes >= 0 ? String(row[iNotes] || "").trim() : ""
+    });
+  }
+  const keyOf = (e) => `${e.date}|${(e.description || "").trim().toLowerCase()}|${Number(e.amount).toFixed(2)}`;
+  const existing = new Set(ledger.map(keyOf));
+  const seenInBatch = new Set();
+  const toAdd = [], dupes = [];
+  for (const e of parsed) {
+    const k = keyOf(e);
+    if (existing.has(k) || seenInBatch.has(k)) dupes.push(e);
+    else { toAdd.push(e); seenInBatch.add(k); }
+  }
+  showImportPreview(toAdd, dupes, errors);
+}
+function showImportPreview(toAdd, dupes, errors) {
+  const el = document.getElementById("importPreview");
+  let html = `<div class="text-body-md mb-stack-md">
+    <span class="font-semibold text-primary">${toAdd.length}</span> new entries will be added.
+    <span class="font-semibold">${dupes.length}</span> already in ledger (skipped).
+    ${errors.length ? `<span class="font-semibold text-error">${errors.length}</span> rows had errors.` : ""}
+  </div>`;
+  if (errors.length) {
+    html += `<details class="mb-stack-md"><summary class="cursor-pointer text-error font-body-sm">View errors</summary>
+      <pre class="text-xs bg-surface-container-high p-2 rounded mt-1 max-h-40 overflow-auto whitespace-pre-wrap">${errors.map(e => e.replace(/</g, "&lt;")).join("\n")}</pre></details>`;
+  }
+  if (toAdd.length) {
+    html += `<div class="max-h-80 overflow-auto border border-outline-variant rounded-lg">
+      <table class="w-full text-xs">
+        <thead class="bg-surface-container-high sticky top-0"><tr>
+          <th class="p-2 text-left">Date</th><th class="p-2 text-left">Type</th>
+          <th class="p-2 text-left">Category</th><th class="p-2 text-left">Description</th>
+          <th class="p-2 text-right">Amount</th><th class="p-2 text-right">%</th>
+        </tr></thead><tbody>`;
+    for (const e of toAdd) {
+      const safe = (s) => String(s || "").replace(/</g, "&lt;");
+      html += `<tr class="border-t border-outline-variant">
+        <td class="p-2 font-data-mono">${safe(e.date)}</td>
+        <td class="p-2">${safe(e.type)}</td>
+        <td class="p-2">${safe(e.category)}</td>
+        <td class="p-2">${safe(e.description)}</td>
+        <td class="p-2 text-right font-data-mono">$${Number(e.amount).toFixed(2)}</td>
+        <td class="p-2 text-right font-data-mono">${e.type === "expense" ? e.deductible_pct + "%" : "-"}</td>
+      </tr>`;
+    }
+    html += `</tbody></table></div>`;
+  }
+  el.innerHTML = html;
+  const btn = document.getElementById("importConfirmBtn");
+  btn.disabled = toAdd.length === 0;
+  btn.textContent = toAdd.length ? `Import ${toAdd.length} entries` : "Nothing to import";
+  window._importToAdd = toAdd;
+  openModal("importModal");
+}
+async function confirmImport() {
+  const toAdd = window._importToAdd || [];
+  if (!toAdd.length) return;
+  const btn = document.getElementById("importConfirmBtn");
+  btn.disabled = true;
+  btn.textContent = `Importing 0 of ${toAdd.length}...`;
+  try {
+    const dbRows = toAdd.map(ledgerToDB);
+    const chunkSize = 50;
+    const insertedAll = [];
+    for (let i = 0; i < dbRows.length; i += chunkSize) {
+      const chunk = dbRows.slice(i, i + chunkSize);
+      const { data, error } = await sb.from("ledger_entries").insert(chunk).select();
+      if (error) throw error;
+      insertedAll.push(...(data || []));
+      btn.textContent = `Importing ${insertedAll.length} of ${toAdd.length}...`;
+    }
+    for (const row of insertedAll) ledger.unshift(ledgerFromDB(row));
+    ledger.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    renderLedger();
+    renderDashboard();
+    closeModal("importModal");
+    alert(`Imported ${insertedAll.length} entries successfully.`);
+  } catch (e) {
+    console.error("importCSV", e);
+    alert("Import failed: " + e.message + "\n\nNo rows in the current batch were saved. You can retry safely — already-imported rows will be detected as duplicates and skipped.");
+    btn.disabled = false;
+    btn.textContent = `Import ${toAdd.length} entries`;
+  }
+}
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFileInput").click();
+});
+document.getElementById("importFileInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (file) await handleImportCSV(file);
+  e.target.value = "";
+});
+document.getElementById("importConfirmBtn").addEventListener("click", confirmImport);
 
 // ============================================================================
 // CHAT
