@@ -413,6 +413,9 @@
             <button id="clearFiltersBtn" class="flex items-center gap-unit px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high transition-colors">
               <span class="material-symbols-outlined text-base">filter_alt_off</span> Clear
             </button>
+            <button id="claimAllBtn" class="flex items-center gap-unit px-4 py-2 border border-outline-variant rounded-lg font-body-sm font-semibold hover:bg-surface-container-high transition-colors" title="Mark all pending expenses in current filter as Claimed">
+              <span class="material-symbols-outlined text-base">task_alt</span> Claim all
+            </button>
             <button id="newEntryBtn" class="flex items-center gap-unit px-4 py-2 bg-primary text-on-primary rounded-lg font-body-sm font-semibold hover:opacity-90 transition-opacity">
               <span class="material-symbols-outlined text-base">add</span> New Entry
             </button>
@@ -1943,6 +1946,53 @@ document.getElementById("clearFiltersBtn").addEventListener("click", () => {
   document.getElementById("filterDateEnd").value = "";
   toggleLedgerCustomRange();
   renderLedger();
+});
+
+document.getElementById("claimAllBtn").addEventListener("click", async () => {
+  const rows = getFilteredLedger().filter(r => r.type === "expense" && r.claimable !== "Claimed");
+  if (!rows.length) {
+    alert("No pending expenses in the current filter.");
+    return;
+  }
+  const total = rows.reduce((s, r) => s + r.amount * (r.deductible_pct || 0) / 100, 0);
+  if (!confirm(`Mark ${rows.length} expense${rows.length === 1 ? "" : "s"} as Claimed?\n\nTotal deductible: ${fmt(total)}\n\nThis can't be undone in bulk — you'd have to change each one back individually.`)) {
+    return;
+  }
+  const btn = document.getElementById("claimAllBtn");
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.style.opacity = "0.5";
+  btn.innerHTML = `<span class="material-symbols-outlined text-base">hourglass_top</span> Updating 0 of ${rows.length}...`;
+  const ids = rows.map(r => r.id);
+  const chunkSize = 100;
+  let updated = 0;
+  try {
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { error } = await sb.from("ledger_entries").update({ claimable: "Claimed" }).in("id", chunk);
+      if (error) throw error;
+      updated += chunk.length;
+      btn.innerHTML = `<span class="material-symbols-outlined text-base">hourglass_top</span> Updating ${updated} of ${rows.length}...`;
+    }
+    for (const r of rows) r.claimable = "Claimed";
+    renderLedger();
+    renderDashboard();
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    btn.style.opacity = "";
+    alert(`Marked ${updated} expense${updated === 1 ? "" : "s"} as Claimed.`);
+  } catch (e) {
+    console.error("claimAll", e);
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+    btn.style.opacity = "";
+    alert(`Update failed after ${updated} of ${rows.length}: ${e.message}\n\nAlready-updated rows have been saved. Reload the page and try again — the remainder will still be flagged Pending.`);
+    if (updated > 0) {
+      await loadLedger();
+      renderLedger();
+      renderDashboard();
+    }
+  }
 });
 
 // ============================================================================
